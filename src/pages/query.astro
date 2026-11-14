@@ -60,7 +60,16 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         <section>
           <div class="q-summary" id="f-summary">Pick a starting point to trace chains.</div>
           <div class="q-goals" id="f-goals"></div>
-          <div id="f-graph" class="graphbox" style="display:none"></div>
+          <div class="graphwrap" id="f-graphwrap" style="display:none">
+            <div class="graph-controls">
+              <button type="button" class="gc" data-cy="f-graph" data-act="in" title="Zoom in">+</button>
+              <button type="button" class="gc" data-cy="f-graph" data-act="out" title="Zoom out">−</button>
+              <button type="button" class="gc" data-cy="f-graph" data-act="fit" title="Fit to contents">fit</button>
+              <button type="button" class="gc" data-cy="f-graph" data-act="relayout" title="Re-run layout">↻</button>
+              <button type="button" class="gc" data-cy="f-graph" data-act="shuffle" title="Different arrangement">⇄</button>
+            </div>
+            <div id="f-graph" class="graphbox"></div>
+          </div>
           <div id="f-results"></div>
         </section>
       </div>
@@ -86,7 +95,16 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         </aside>
         <section>
           <div class="q-summary" id="g-summary">Pick a start vuln and a goal.</div>
-          <div id="g-graph" class="graphbox" style="display:none"></div>
+          <div class="graphwrap" id="g-graphwrap" style="display:none">
+            <div class="graph-controls">
+              <button type="button" class="gc" data-cy="g-graph" data-act="in" title="Zoom in">+</button>
+              <button type="button" class="gc" data-cy="g-graph" data-act="out" title="Zoom out">−</button>
+              <button type="button" class="gc" data-cy="g-graph" data-act="fit" title="Fit to contents">fit</button>
+              <button type="button" class="gc" data-cy="g-graph" data-act="relayout" title="Re-run layout">↻</button>
+              <button type="button" class="gc" data-cy="g-graph" data-act="shuffle" title="Different arrangement">⇄</button>
+            </div>
+            <div id="g-graph" class="graphbox"></div>
+          </div>
           <div id="g-results"></div>
         </section>
       </div>
@@ -100,10 +118,20 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
             <div class="ghead"><span class="label">I want to achieve</span></div>
             <select id="b-goal"><option value="">— pick —</option>{goalChoices.map((g) => <option value={g.slug}>{g.label}</option>)}</select>
           </div>
+          <p class="control-hint">The map shows <b>every</b> vuln that reaches this goal and the entry paths into each. Click a result to centre it on the map.</p>
         </aside>
         <section>
           <div class="q-summary" id="b-summary">Pick a goal to see what gives it and what each step needs.</div>
-          <div id="b-graph" class="graphbox" style="display:none"></div>
+          <div class="graphwrap" id="b-graphwrap" style="display:none">
+            <div class="graph-controls">
+              <button type="button" class="gc" data-cy="b-graph" data-act="in" title="Zoom in">+</button>
+              <button type="button" class="gc" data-cy="b-graph" data-act="out" title="Zoom out">−</button>
+              <button type="button" class="gc" data-cy="b-graph" data-act="fit" title="Fit to contents">fit</button>
+              <button type="button" class="gc" data-cy="b-graph" data-act="relayout" title="Re-run layout">↻</button>
+              <button type="button" class="gc" data-cy="b-graph" data-act="shuffle" title="Different arrangement">⇄</button>
+            </div>
+            <div id="b-graph" class="graphbox"></div>
+          </div>
           <div id="b-results"></div>
         </section>
       </div>
@@ -130,6 +158,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         'width': 'label', 'height': 'label', 'padding': 8 } },
       { selector: 'node[goal = 1]', style: { 'border-width': 3, 'border-color': '#e5484d' } },
       { selector: 'node[start = 1]', style: { 'shape': 'ellipse', 'border-width': 2, 'border-color': '#e4e8f0' } },
+      { selector: 'node.focus', style: { 'border-width': 4, 'border-color': '#e4e8f0' } },
       { selector: 'edge', style: {
         'width': 1.5, 'line-color': '#4a5162', 'target-arrow-color': '#4a5162',
         'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'arrow-scale': 0.9,
@@ -138,19 +167,67 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         'text-background-padding': 2 } },
       { selector: 'edge[curated = 0]', style: { 'line-style': 'dashed', 'line-color': '#333b49', 'target-arrow-color': '#333b49' } },
     ];
+
+    const LAYOUTS = {
+      breadthfirst: { name: 'breadthfirst', directed: true, padding: 18, spacingFactor: 1.15 },
+      cose: { name: 'cose', padding: 18, animate: false, nodeRepulsion: 9000, idealEdgeLength: 90, nodeOverlap: 16 },
+      concentric: { name: 'concentric', padding: 18, minNodeSpacing: 24 },
+      circle: { name: 'circle', padding: 18 },
+      grid: { name: 'grid', padding: 18 },
+    };
+    const LAYOUT_ORDER = ['breadthfirst', 'cose', 'concentric', 'circle', 'grid'];
+
     const cyById = {};
+    const layoutIdx = {};
+    const lastRoots = {};
+
+    function runLayout(id) {
+      const cy = cyById[id];
+      if (!cy || !cy.elements().length) return;
+      const name = LAYOUT_ORDER[layoutIdx[id] ?? 0];
+      const opts = { ...LAYOUTS[name] };
+      if (name === 'breadthfirst' && lastRoots[id]?.length) opts.roots = lastRoots[id];
+      cy.layout(opts).run();
+      cy.fit(undefined, 24);
+    }
+
     function drawGraph(id, els, roots) {
       const container = document.getElementById(id);
       if (!container) return;
-      if (typeof cytoscape === 'undefined' || !els.length) { container.style.display = 'none'; return; }
-      container.style.display = 'block';
+      const wrap = container.closest('.graphwrap');
+      if (typeof cytoscape === 'undefined' || !els.length) { if (wrap) wrap.style.display = 'none'; return; }
+      if (wrap) wrap.style.display = 'block';
       let cy = cyById[id];
-      if (!cy) cy = cyById[id] = cytoscape({ container, style: GRAPH_STYLE, wheelSensitivity: 0.2, minZoom: 0.2, maxZoom: 2.5 });
+      if (!cy) {
+        cy = cyById[id] = cytoscape({ container, style: GRAPH_STYLE, wheelSensitivity: 0.2, minZoom: 0.15, maxZoom: 3 });
+        if (wrap) wrap.querySelectorAll('.gc').forEach((btn) => btn.addEventListener('click', () => {
+          const act = btn.dataset.act;
+          const cx = container.clientWidth / 2, cyy = container.clientHeight / 2;
+          if (act === 'in') cy.zoom({ level: cy.zoom() * 1.3, renderedPosition: { x: cx, y: cyy } });
+          else if (act === 'out') cy.zoom({ level: cy.zoom() / 1.3, renderedPosition: { x: cx, y: cyy } });
+          else if (act === 'fit') cy.fit(undefined, 24);
+          else if (act === 'relayout') runLayout(id);
+          else if (act === 'shuffle') { layoutIdx[id] = ((layoutIdx[id] ?? 0) + 1) % LAYOUT_ORDER.length; runLayout(id); }
+        }));
+      }
       cy.elements().remove();
       cy.add(els);
-      cy.layout({ name: 'breadthfirst', directed: true, padding: 18, spacingFactor: 1.15, roots: roots?.length ? roots : undefined }).run();
-      cy.fit(undefined, 24);
+      cy.resize();
+      lastRoots[id] = roots?.length ? roots : null;
+      if (layoutIdx[id] === undefined) layoutIdx[id] = 0;
+      runLayout(id);
     }
+
+    function focusNode(id, slug) {
+      const cy = cyById[id];
+      if (!cy) return;
+      const node = cy.getElementById(slug);
+      if (!node || !node.length) return;
+      cy.nodes().removeClass('focus');
+      node.addClass('focus');
+      cy.animate({ center: { eles: node }, zoom: Math.max(cy.zoom(), 1.1) }, { duration: 300 });
+    }
+
     function pushNode(els, seen, slug, extra = {}) {
       if (seen.has(slug)) return; seen.add(slug);
       const n = nodeMeta[slug];
@@ -197,7 +274,8 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const goalsEl = document.getElementById('f-goals');
       const results = document.getElementById('f-results');
       if (!graph || (!fState.node && !fState.caps.size)) {
-        summary.textContent = 'Pick a starting point to trace chains.'; goalsEl.innerHTML = ''; results.innerHTML = ''; return;
+        summary.textContent = 'Pick a starting point to trace chains.'; goalsEl.innerHTML = ''; results.innerHTML = '';
+        drawGraph('f-graph', [], []); return;
       }
       const out = forwardReach(graph, { startNodes: fState.node ? [fState.node] : [], startCaps: [...fState.caps] });
       const label = fState.node ? nodeMeta[fState.node].name : [...fState.caps].map((c) => capLabel[c]).join(' + ');
@@ -254,15 +332,16 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const summary = document.getElementById('g-summary');
       const results = document.getElementById('g-results');
       if (!graph || !gState.node || !gState.goal) {
-        summary.textContent = 'Pick a start vuln and a goal.'; results.innerHTML = ''; return;
+        summary.textContent = 'Pick a start vuln and a goal.'; results.innerHTML = '';
+        drawGraph('g-graph', [], []); return;
       }
-      const paths = findPaths(graph, { start: gState.node, goalSlugs: [gState.goal], through: gState.through || null, maxDepth: 5 });
+      const paths = findPaths(graph, { start: gState.node, goalSlugs: [gState.goal], through: gState.through || null, maxDepth: 6 });
       const goalSet = new Set([gState.goal]);
       const thru = gState.through ? ` through <b>${esc(nodeMeta[gState.through].name)}</b>` : '';
       summary.innerHTML = `<b>${paths.length}</b> path(s) from <b>${esc(nodeMeta[gState.node].name)}</b> to <b>${esc(goalLabel[gState.goal])}</b>${thru}.`;
       results.innerHTML = paths.length
         ? paths.map((p) => pathCard(p, goalSet)).join('')
-        : '<div class="q-empty">No path within 5 hops. Try removing the "through" constraint or a different start.</div>';
+        : '<div class="q-empty">No path within 6 hops. Try removing the "through" constraint, or a different start — curated multi-hop chains are sparse by design.</div>';
       drawGraph('g-graph', pathElements(paths), gState.node ? [gState.node] : undefined);
     }
 
@@ -271,22 +350,34 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     function renderBackward() {
       const summary = document.getElementById('b-summary');
       const results = document.getElementById('b-results');
-      if (!graph || !bState.goal) { summary.textContent = 'Pick a goal to see what gives it and what each step needs.'; results.innerHTML = ''; return; }
+      if (!graph || !bState.goal) {
+        summary.textContent = 'Pick a goal to see what gives it and what each step needs.'; results.innerHTML = '';
+        drawGraph('b-graph', [], []); return;
+      }
       const achievers = nodesAchieving(graph, [bState.goal]);
-      const res = findBackward(graph, { goalSlugs: [bState.goal], maxDepth: 5 });
+      const res = findBackward(graph, { goalSlugs: [bState.goal], maxDepth: 6 });
       const goalSet = new Set([bState.goal]);
-      summary.innerHTML = `<b>${esc(goalLabel[bState.goal])}</b> is achieved by <b>${achievers.length}</b> vuln(s). Entry paths below.`;
+      summary.innerHTML = `<b>${esc(goalLabel[bState.goal])}</b> is achieved by <b>${achievers.length}</b> vuln(s). Every one is on the map; entry paths below.`;
+
+      // Map: all backward paths, PLUS every achiever (even those with no inbound path).
+      const els = pathElements(res);
+      const present = new Set(els.filter((e) => e.data.source === undefined).map((e) => e.data.id));
+      const seen = present;
+      for (const gn of achievers) pushNode(els, seen, gn);
+      drawGraph('b-graph', els, undefined);
+
       const byGoalNode = {};
       for (const r of res) (byGoalNode[r.goalNode] ??= []).push(r);
       let html = '';
       for (const gn of achievers) {
         const list = byGoalNode[gn] ?? [];
-        html += `<div class="goal-node-head">achieved by <b>${esc(nodeMeta[gn].name)}</b></div>`;
+        const n = nodeMeta[gn];
+        html += `<div class="goal-node-head" data-focus="${gn}" title="Centre on map">achieved by <b>${esc(n.name)}</b> <span class="cat">${esc(n.category)}</span><span class="focus-hint">◎ map</span></div>`;
         html += list.length ? list.map((p) => pathCard(p, goalSet)).join('')
-          : `<div class="pathcard"><div class="pathflow"><a class="step goal" href="${BASE}node/${gn}/">${esc(nodeMeta[gn].name)}</a></div></div>`;
+          : `<div class="pathcard"><div class="pathmeta"><span class="chip">entry point</span></div><div class="pathflow"><a class="step goal" href="${BASE}node/${gn}/">${esc(n.name)}</a></div></div>`;
       }
       results.innerHTML = html;
-      drawGraph('b-graph', pathElements(res), undefined);
+      results.querySelectorAll('[data-focus]').forEach((el) => el.addEventListener('click', () => focusNode('b-graph', el.dataset.focus)));
     }
 
     // --- wiring ---
@@ -296,6 +387,10 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         document.querySelectorAll('.panel').forEach((x) => x.classList.remove('active'));
         t.classList.add('active');
         document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+        // Cytoscape needs a resize+fit after its container becomes visible.
+        const g = { forward: 'f-graph', goal: 'g-graph', backward: 'b-graph' }[t.dataset.tab];
+        const cy = cyById[g];
+        if (cy && cy.elements().length) { cy.resize(); cy.fit(undefined, 24); }
       }));
 
       document.getElementById('f-node').addEventListener('change', (e) => { fState.node = e.target.value; renderForward(); });

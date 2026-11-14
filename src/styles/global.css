@@ -83,7 +83,9 @@ a:hover { color: var(--text); }
 
 /* --- Layout: facet rail + table --- */
 .layout { display: grid; grid-template-columns: 220px 1fr; gap: 32px; padding: 26px 0 80px; align-items: start; }
-.facets { position: sticky; top: 16px; }
+.facets { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; padding-right: 8px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.facets::-webkit-scrollbar { width: 8px; }
+.facets::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 .facets .facets-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
 .facets .clear { font-family: var(--mono); font-size: 11px; color: var(--text-dim); cursor: pointer; background: none; border: none; letter-spacing: 0.1em; text-transform: uppercase; }
 .facets .clear:hover { color: var(--accent); }
@@ -164,7 +166,11 @@ a:hover { color: var(--text); }
 
 /* --- Query mode --- */
 .query-layout { display: grid; grid-template-columns: 300px 1fr; gap: 32px; padding: 26px 0 80px; align-items: start; }
-.controls { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 22px; }
+.controls { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 22px; max-height: calc(100vh - 32px); overflow-y: auto; padding-right: 8px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.controls::-webkit-scrollbar { width: 8px; }
+.controls::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+.control-hint { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin: 4px 0 0; }
+.control-hint b { color: var(--text); }
 .control-group .ghead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
 .control-group select {
   width: 100%; background: var(--bg-elev); border: 1px solid var(--border-strong); border-radius: 6px;
@@ -179,7 +185,7 @@ a:hover { color: var(--text); }
 }
 .pick:hover { border-color: var(--accent-3); color: var(--text); }
 .pick.sel { border-color: var(--accent-3); color: var(--accent-3); background: rgba(78,161,211,0.08); }
-.cap-sub { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin: 10px 0 6px; }
+.cap-sub { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 14px 0 7px; }
 .btn-row { display: flex; gap: 10px; }
 .btn {
   font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
@@ -242,7 +248,20 @@ a:hover { color: var(--text); }
 .goal-node-head b { color: var(--accent); }
 
 /* --- Graph view --- */
-.graphbox { height: 420px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elev); margin-bottom: 16px; overflow: hidden; }
+.graphwrap { position: sticky; top: 14px; z-index: 2; margin-bottom: 18px; }
+.graphbox { height: 400px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elev); overflow: hidden; }
+.graph-controls { position: absolute; top: 8px; right: 8px; z-index: 3; display: flex; gap: 4px; }
+.graph-controls .gc {
+  font-family: var(--mono); font-size: 13px; line-height: 1; min-width: 30px; height: 28px; padding: 0 8px;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  background: rgba(15,20,28,0.92); border: 1px solid var(--border-strong); border-radius: 6px;
+  color: var(--text-muted); backdrop-filter: blur(2px);
+}
+.graph-controls .gc:hover { border-color: var(--accent); color: var(--text); }
+.focus-hint { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--accent-3); margin-left: 8px; }
+.goal-node-head[data-focus] { cursor: pointer; }
+.goal-node-head[data-focus]:hover { color: var(--text); }
+.goal-node-head .cat { font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); margin-left: 8px; text-transform: uppercase; }
 .graph-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 16px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
 .graph-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
 .graph-legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
@@ -276,9 +295,49 @@ a:hover { color: var(--text); }
 
 /* --- Responsive --- */
 @media (max-width: 860px) {
-  .layout, .detail { grid-template-columns: 1fr; }
-  .facets, .side { position: static; }
+  .layout, .detail, .query-layout, .mode-layout { grid-template-columns: 1fr; gap: 22px; }
+  .facets, .side, .controls {
+    position: static; max-height: none; overflow: visible; padding-right: 0;
+  }
+  .graphwrap { position: static; }
   .thead { display: none; }
   .row { grid-template-columns: 1fr; gap: 6px; }
   .row .cat, .cap-cell, .count-pill { font-size: 12px; }
+  /* cap picker gets very tall on a phone — cap its height and let it scroll */
+  #panel-forward .control-group:nth-child(2) { max-height: 46vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+}
+
+@media (max-width: 600px) {
+  .wrap { padding: 0 14px; }
+  body { font-size: 14.5px; }
+
+  /* header wraps instead of squashing */
+  .site-header .wrap { flex-wrap: wrap; gap: 10px 14px; padding-top: 14px; padding-bottom: 14px; }
+  .brand .tagline { display: none; }
+  .nav { gap: 14px 16px; flex-wrap: wrap; width: 100%; }
+
+  .hero { padding: 28px 0 16px; }
+  .hero p { font-size: 15px; }
+
+  .toolbar { gap: 14px 16px; padding: 16px 0; }
+  .search { flex-basis: 100%; }
+  .stats { font-size: 12px; }
+
+  /* query tabs: never overflow — scroll horizontally if needed */
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 10px 12px; white-space: nowrap; }
+
+  .graphbox { height: 300px; }
+  .graph-controls .gc { min-width: 34px; height: 32px; } /* bigger touch targets */
+
+  /* node detail: stack the key/value fields */
+  .field { grid-template-columns: 1fr; gap: 4px; }
+  .node-head { padding: 14px 0 16px; gap: 10px 16px; }
+  .detail { gap: 22px; }
+
+  .site-footer .wrap { flex-direction: column; gap: 14px; }
+
+  /* path flow can get wide — allow it to wrap tightly */
+  .step { font-size: 13px; padding: 4px 8px; }
 }
