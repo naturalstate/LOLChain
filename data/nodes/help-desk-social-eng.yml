@@ -1,0 +1,37 @@
+id: help-desk-social-eng
+name: Help-Desk Social Engineering
+slug: help-desk-social-eng
+tier: advanced
+category: network
+aliases: [vishing, help-desk-reset, mfa-reset, scattered-spider]
+summary: >
+  The attacker phones the IT help desk, impersonates an employee, and talks an agent
+  into resetting a password or enrolling a new MFA device — bypassing authentication
+  through people, not software. (Scattered Spider used this against MGM and Caesars
+  in 2023.)
+requires: []
+provides:
+  - auth-bypass
+  - read-session-token
+  - internal-network-reach
+achieves:
+  - auth-bypass
+detection: >
+  MFA device re-enrollment shortly after a help-desk call; password resets from
+  unusual channels; logins from new devices right after a reset; help-desk tickets
+  lacking strong identity proofing.
+remediation: >
+  Strong caller identity verification (video / manager callback / one-time codes);
+  delays and approvals on MFA re-enrollment; record and review reset requests; alert
+  on reset-then-login patterns.
+mitre: [T1656, T1078]
+references:
+  - title: "CISA AA23-320A — Scattered Spider (help-desk / vishing)"
+    url: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-320a
+chains:
+  - to: privileged-creds-exposed
+    via: [internal-network-reach]
+    outcome: Use the reset account's access to reach internal shares and secret vaults.
+    tier: advanced
+    difficulty: medium
+    documented: false

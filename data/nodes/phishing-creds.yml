@@ -1,0 +1,45 @@
+id: phishing-creds
+name: Credential Phishing
+slug: phishing-creds
+tier: basic
+category: network
+aliases: [phishing, smishing, spearphishing, 0ktapus]
+summary: >
+  A social-engineering initial vector: a lookalike login page delivered by email, SMS
+  (smishing) or chat harvests a victim's credentials and, with an attacker-in-the-middle
+  proxy, their live session/MFA token — handing the attacker a valid foothold with no
+  software vulnerability. (0ktapus/Scattered Spider 2022 phished 100+ orgs this way.)
+requires:
+  - victim-interaction
+provides:
+  - read-session-token
+  - internal-network-reach
+achieves: []
+detection: >
+  Lookalike domains and newly-registered certs; logins from new devices/ASNs right
+  after a mail/SMS campaign; AiTM proxy indicators; impossible travel; reverse-proxy
+  user-agents; credential submission to non-corporate hosts.
+remediation: >
+  Phishing-resistant MFA (FIDO2/passkeys) that defeats AiTM; mark external mail; block
+  newly-registered domains; user reporting; conditional access and device binding.
+mitre: [T1566, T1598]
+references:
+  - title: "CISA AA23-320A — Scattered Spider (phishing / smishing)"
+    url: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-320a
+  - title: "Verizon Data Breach Investigations Report (DBIR)"
+    url: https://www.verizon.com/business/resources/reports/dbir/
+chains:
+  - to: session-hijack
+    via: [read-session-token]
+    outcome: Replay the phished session token / credentials to act as the victim.
+    tier: basic
+    difficulty: easy
+    documented: true
+    references:
+      - https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-320a
+  - to: privileged-creds-exposed
+    via: [internal-network-reach]
+    outcome: From the victim's access, hunt internal shares and vaults for privileged credentials.
+    tier: advanced
+    difficulty: medium
+    documented: false

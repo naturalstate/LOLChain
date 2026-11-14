@@ -1,0 +1,28 @@
+id: ransomware-deployment
+name: Ransomware Deployment
+slug: ransomware-deployment
+tier: expert
+category: network
+aliases: [ransomware, double-extortion, mass-encryption]
+summary: >
+  The intrusion endgame: with broad reach (often domain-wide), the attacker exfiltrates
+  data for extortion, deletes or encrypts backups, and pushes an encryptor to every
+  reachable host — double-extortion ransomware impact across the organisation.
+requires:
+  - lateral-movement
+provides:
+  - lateral-movement
+achieves:
+  - ransomware-impact
+  - data-breach
+detection: >
+  Mass file renames/entropy spikes; shadow-copy and backup deletion (vssadmin, wbadmin);
+  bulk egress to cloud storage / Rclone before encryption; GPO/PsExec/PDQ mass execution.
+remediation: >
+  Offline, immutable, tested backups; segment and restrict lateral SMB/RDP; EDR with
+  mass-encryption behaviour blocking; egress monitoring; least-privilege and tiered admin.
+mitre: [T1486, T1490]
+references:
+  - title: "CISA — #StopRansomware Guide"
+    url: https://www.cisa.gov/stopransomware/ransomware-guide
+chains: []

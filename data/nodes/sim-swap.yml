@@ -1,0 +1,33 @@
+id: sim-swap
+name: SIM Swap / OTP Interception
+slug: sim-swap
+tier: advanced
+category: mobile
+aliases: [sim-swap, sim-swapping, otp-intercept, port-out]
+summary: >
+  The attacker social-engineers (or bribes) a mobile carrier into porting the victim's
+  number to a SIM they control, then receives the victim's SMS one-time codes and
+  password-reset links — defeating SMS-based MFA and taking over accounts.
+requires: []
+provides:
+  - read-session-token
+  - auth-bypass
+achieves:
+  - account-takeover
+detection: >
+  Carrier SIM-change notifications; loss of mobile service on the victim device; OTP
+  deliveries and password resets from new devices; logins immediately after a port-out.
+remediation: >
+  Move off SMS MFA to app/FIDO2 authenticators; carrier port-out PIN/lock; high-value
+  account step-up that doesn't rely on SMS; alert on SIM-change + reset sequences.
+mitre: [T1451]
+references:
+  - title: "CISA AA23-320A — Scattered Spider (SIM swapping)"
+    url: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-320a
+chains:
+  - to: session-hijack
+    via: [read-session-token]
+    outcome: Use intercepted OTPs / reset links to seize the victim's authenticated session.
+    tier: advanced
+    difficulty: medium
+    documented: false

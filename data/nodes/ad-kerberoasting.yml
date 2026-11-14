@@ -1,0 +1,34 @@
+id: ad-kerberoasting
+name: Kerberoasting
+slug: ad-kerberoasting
+tier: advanced
+category: network
+aliases: [kerberoast, as-rep-roast, spn-roast]
+summary: >
+  Any authenticated domain user can request Kerberos service tickets (TGS) for accounts
+  with an SPN and crack them offline. A weak service-account password yields that
+  account's credentials — often a path to higher privilege.
+requires:
+  - domain-credentials
+provides:
+  - domain-credentials
+  - priv-esc
+achieves:
+  - privilege-escalation
+detection: >
+  Bursts of TGS-REQ (event 4769) with RC4 encryption for many SPNs from one account;
+  service accounts authenticating from unusual hosts after a crack.
+remediation: >
+  Long random service-account passwords or gMSA; AES-only Kerberos; least-privilege
+  service accounts; alert on anomalous TGS requests.
+mitre: [T1558.003]
+references:
+  - title: "MITRE ATT&CK — Kerberoasting (T1558.003)"
+    url: https://attack.mitre.org/techniques/T1558/003/
+chains:
+  - to: ad-domain-takeover
+    via: [domain-credentials]
+    outcome: A cracked privileged service account feeds AD escalation to Domain Admin.
+    tier: expert
+    difficulty: hard
+    documented: false

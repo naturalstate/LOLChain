@@ -1,0 +1,39 @@
+id: malicious-oauth-consent
+name: Malicious OAuth Consent
+slug: malicious-oauth-consent
+tier: advanced
+category: cloud
+aliases: [consent-phishing, illicit-consent-grant, device-code-phishing]
+summary: >
+  The attacker lures a victim into approving a malicious OAuth application (or a
+  device-code prompt). The granted token gives persistent API access to mail, files
+  and directory data without a password — and survives password resets. (Midnight
+  Blizzard abused OAuth apps to reach Microsoft corporate mailboxes, 2023-24.)
+requires:
+  - victim-interaction
+provides:
+  - token-leak
+  - read-session-token
+achieves:
+  - account-takeover
+detection: >
+  New third-party app consents with broad scopes (Mail.Read, full_access_as_app);
+  OAuth grants to unverified publishers; API access without interactive logins;
+  device-code auth from unexpected locations.
+remediation: >
+  Restrict user consent to verified publishers / admin approval; review app grants and
+  service principals; short token lifetimes; conditional access on device-code flows;
+  revoke risky apps.
+mitre: [T1528, T1550.001]
+references:
+  - title: "Microsoft — Midnight Blizzard nation-state attack (malicious OAuth apps)"
+    url: https://www.microsoft.com/en-us/security/blog/2024/01/25/midnight-blizzard-guidance-for-responders-on-nation-state-attack/
+chains:
+  - to: oauth-token-theft
+    via: [token-leak]
+    outcome: Use the consented token to act on the victim's account and pivot to SSO-backed apps.
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://www.microsoft.com/en-us/security/blog/2024/01/25/midnight-blizzard-guidance-for-responders-on-nation-state-attack/

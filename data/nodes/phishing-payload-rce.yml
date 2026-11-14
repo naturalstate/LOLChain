@@ -1,0 +1,38 @@
+id: phishing-payload-rce
+name: Phishing Payload Execution
+slug: phishing-payload-rce
+tier: advanced
+category: network
+aliases: [malicious-attachment, macro-malware, loader, initial-access-broker]
+summary: >
+  A social-engineering initial vector for intrusions: the victim opens a malicious
+  attachment, macro, ISO/LNK or "fix-it" script, running a loader that gives the
+  attacker code execution on the endpoint — the usual first hop of human-operated
+  ransomware.
+requires:
+  - victim-interaction
+provides:
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  Office/script hosts spawning shells or rundll32/regsvr32; LNK/ISO/HTA execution from
+  mail/downloads; new scheduled tasks and run keys; beaconing from user workstations
+  after a lure.
+remediation: >
+  Block risky attachments and macros from the internet; application allow-listing;
+  EDR with behaviour detection; user awareness; least-privilege endpoints; mark and
+  sandbox external mail.
+mitre: [T1566.001, T1204]
+references:
+  - title: "CISA — #StopRansomware Guide (initial access, phishing/precursor malware)"
+    url: https://www.cisa.gov/stopransomware/ransomware-guide
+chains:
+  - to: credential-dumping
+    via: [os-command-exec]
+    outcome: From the endpoint foothold, dump credentials to move laterally and escalate.
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://www.cisa.gov/stopransomware/ransomware-guide

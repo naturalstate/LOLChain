@@ -1,0 +1,37 @@
+id: container-escape
+name: Container Escape to Node
+slug: container-escape
+tier: expert
+category: kubernetes
+aliases: [container-breakout, privileged-container, docker-sock, hostpath-escape]
+summary: >
+  Code execution inside a misconfigured container (privileged, hostPath mount, mounted
+  docker.sock, or dangerous capabilities like CAP_SYS_ADMIN) is leveraged to break out
+  onto the underlying node as root — turning an app compromise into host and cluster
+  control. (Siloscape, 2021, escaped Windows containers to attack Kubernetes.)
+requires:
+  - os-command-exec
+provides:
+  - node-root
+  - lateral-movement
+achieves:
+  - privilege-escalation
+detection: >
+  Mounts of /var/run/docker.sock or the host filesystem; privileged pods; processes
+  on the node parented to container runtimes; access to kubelet credentials from a pod.
+remediation: >
+  Deny privileged pods and hostPath/docker.sock mounts (Pod Security Admission / OPA);
+  drop capabilities; read-only rootfs; seccomp/AppArmor; keep nodes patched.
+mitre: [T1611]
+references:
+  - title: "Unit 42 — Siloscape: Windows container escape to Kubernetes"
+    url: https://unit42.paloaltonetworks.com/siloscape/
+chains:
+  - to: k8s-node-to-cluster-admin
+    via: [node-root]
+    outcome: Use node identity and other pods' secrets to reach cluster admin.
+    tier: expert
+    difficulty: hard
+    documented: true
+    references:
+      - https://unit42.paloaltonetworks.com/siloscape/

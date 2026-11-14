@@ -34,3 +34,6 @@ goals:
   - slug: supply-chain-compromise
     label: Supply-chain compromise
     description: Tamper with artifacts/pipelines consumed by downstream users.
+  - slug: ransomware-impact
+    label: Ransomware / data extortion
+    description: Mass encryption and/or exfiltration-extortion of an organisation's data.

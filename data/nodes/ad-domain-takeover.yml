@@ -23,4 +23,14 @@ mitre: [T1003.006, T1558, T1484]
 references:
   - title: Microsoft - Securing privileged access
     url: https://learn.microsoft.com/en-us/security/privileged-access-workstations/overview
-chains: []
+chains:
+  - to: ransomware-deployment
+    via: [lateral-movement]
+    outcome: >
+      Use domain-wide control to push ransomware to every host (GPO/PsExec) and
+      exfiltrate before encrypting — the standard human-operated ransomware endgame.
+    tier: expert
+    difficulty: medium
+    documented: true
+    references:
+      - https://www.cisa.gov/stopransomware/ransomware-guide

@@ -4,7 +4,7 @@
 
 <p align="center">
   <b><a href="https://naturalstate.github.io/LOLChain/">🔗 Live site</a></b>
-  &nbsp;·&nbsp; 56 vulns &nbsp;·&nbsp; 46 curated chains &nbsp;·&nbsp; 55 derived candidates &nbsp;·&nbsp; 7 categories
+  &nbsp;·&nbsp; 65 vulns &nbsp;·&nbsp; 57 curated chains &nbsp;·&nbsp; 102 derived candidates &nbsp;·&nbsp; 7 categories
 </p>
 
 ---
@@ -162,10 +162,20 @@ each node cites its sources (references are never invented):
 | **Codecov** (2021) | leaked distribution cred → trojaned uploader → downstream CI secrets | `cicd-secret-exfil` → `supply-chain-backdoor` |
 | **SolarWinds SUNBURST** (2020) | build-server implant → signed backdoored Orion → downstream | `supply-chain-backdoor` |
 | **GitHub Actions pwn request** / **Travis CI** (CVE-2021-41077) | untrusted PR code / forked build → pipeline secrets | `cicd-ppe` → `cicd-secret-exfil` |
+| **Scattered Spider / 0ktapus** (2022-23) | phishing / help-desk vishing / SIM swap → account + internal access | `phishing-creds`, `help-desk-social-eng`, `sim-swap` |
+| **Midnight Blizzard** (2023-24) | malicious OAuth consent → persistent mailbox/API access | `malicious-oauth-consent` → `oauth-token-theft` |
+| **Siloscape** (2021) | container escape → Kubernetes node → cluster | `container-escape` → `k8s-node-to-cluster-admin` |
+| **Human-operated ransomware** (CISA #StopRansomware) | phishing payload → credential dumping → AD takeover → mass encryption | `phishing-payload-rce` → `credential-dumping` → `ad-domain-takeover` → `ransomware-deployment` |
 
 The recurring hinge across most of them: a "boring" foothold (SSRF, an exposed
 dashboard, a leaked key, a stolen token, code exec on a host) is converted into
 **standing or temporary cloud/service credentials**, which then unlock data or code.
+
+**Social engineering is a first-class vector here**, not just a footnote: phishing,
+help-desk/vishing, SIM-swap, MFA-fatigue, OAuth-consent and malicious-payload lures are
+nodes that hand off real capabilities (a session, a reset, internal reach, code exec)
+into the rest of the graph — so you can trace `help-desk social engineering → … →
+cloud account compromise` the same way you trace a technical bug.
 
 ## Site features
 
@@ -236,7 +246,7 @@ docs/images/              # README graphics
 ## Status
 
 - [x] **Phase 0** — pipeline skeleton (schema, vocab, seed nodes, build, filterable UI).
-- [x] **Phase 1** — dataset (56 vulns, 46 curated chains, 7 categories).
+- [x] **Phase 1** — dataset (65 vulns, 57 curated chains, 7 categories).
 - [x] **Phase 2** — "I have X" forward query + facets + per-node pages.
 - [x] **Phase 3** — goal-directed + constrained + backward pathfinding; derived chains.
 - [x] **Phase 4** — interactive graph visualization (Cytoscape).
