@@ -177,6 +177,7 @@ a:hover { color: var(--text); }
   padding: 10px 12px; color: var(--text); font-family: var(--mono); font-size: 13px;
 }
 .control-group select:focus { outline: none; border-color: var(--accent); }
+.control-group select option:disabled { color: var(--text-dim); }
 .chip-pick { display: flex; flex-wrap: wrap; gap: 6px; }
 .pick {
   font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; cursor: pointer;
@@ -299,7 +300,9 @@ a:hover { color: var(--text); }
   .facets, .side, .controls {
     position: static; max-height: none; overflow: visible; padding-right: 0;
   }
-  .graphwrap { position: static; }
+  /* static (not sticky) on mobile, but still a positioning context so the
+     map controls anchor to the map box, not the viewport corner */
+  .graphwrap { position: relative; top: auto; }
   .thead { display: none; }
   .row { grid-template-columns: 1fr; gap: 6px; }
   .row .cat, .cap-cell, .count-pill { font-size: 12px; }

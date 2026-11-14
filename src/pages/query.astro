@@ -91,6 +91,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
             <div class="ghead"><span class="label">Through (optional)</span></div>
             <select id="g-through"><option value="">— any —</option>{nodeChoices.map((n) => <option value={n.slug}>{n.name}</option>)}</select>
           </div>
+          <p class="control-hint">Greyed-out goals and “through” vulns can't be reached from the chosen start — the graph only links steps that actually hand off a capability, so an impossible combination is disabled rather than returning an empty map.</p>
           <div class="btn-row"><button class="btn" id="g-reset" type="button">Reset</button></div>
         </aside>
         <section>
@@ -328,6 +329,28 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
 
     // --- goal-directed mode ---
     const gState = { node: '', goal: '', through: '' };
+    // Disable goals/throughs that can't be reached from the chosen start, so the
+    // user never has to click through an impossible combination to discover it's empty.
+    function syncGoalAvail() {
+      const start = gState.node ? nodeMeta[gState.node] : null;
+      const goalSel = document.getElementById('g-goal');
+      const thruSel = document.getElementById('g-through');
+      const canGoal = (slug) => !start || (start.reachGoals ?? []).includes(slug) || (start.achieves ?? []).includes(slug);
+      for (const opt of goalSel.options) { if (opt.value) opt.disabled = !canGoal(opt.value); }
+      if (gState.goal && !canGoal(gState.goal)) { gState.goal = ''; goalSel.value = ''; }
+
+      const goal = gState.goal;
+      const canThru = (slug) => {
+        if (!start) return true;
+        if (slug === gState.node) return false;
+        if (!(start.reachNodes ?? []).includes(slug)) return false;
+        if (!goal) return true;
+        const tn = nodeMeta[slug];
+        return (tn.reachGoals ?? []).includes(goal) || (tn.achieves ?? []).includes(goal);
+      };
+      for (const opt of thruSel.options) { if (opt.value) opt.disabled = !canThru(opt.value); }
+      if (gState.through && !canThru(gState.through)) { gState.through = ''; thruSel.value = ''; }
+    }
     function renderGoal() {
       const summary = document.getElementById('g-summary');
       const results = document.getElementById('g-results');
@@ -404,12 +427,13 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         document.querySelectorAll('#panel-forward .pick.sel').forEach((b) => b.classList.remove('sel')); renderForward();
       });
 
-      document.getElementById('g-node').addEventListener('change', (e) => { gState.node = e.target.value; renderGoal(); });
-      document.getElementById('g-goal').addEventListener('change', (e) => { gState.goal = e.target.value; renderGoal(); });
+      document.getElementById('g-node').addEventListener('change', (e) => { gState.node = e.target.value; syncGoalAvail(); renderGoal(); });
+      document.getElementById('g-goal').addEventListener('change', (e) => { gState.goal = e.target.value; syncGoalAvail(); renderGoal(); });
       document.getElementById('g-through').addEventListener('change', (e) => { gState.through = e.target.value; renderGoal(); });
       document.getElementById('g-reset').addEventListener('click', () => {
         gState.node = gState.goal = gState.through = '';
-        ['g-node', 'g-goal', 'g-through'].forEach((id) => (document.getElementById(id).value = '')); renderGoal();
+        ['g-node', 'g-goal', 'g-through'].forEach((id) => (document.getElementById(id).value = ''));
+        syncGoalAvail(); renderGoal();
       });
 
       document.getElementById('b-goal').addEventListener('change', (e) => { bState.goal = e.target.value; renderBackward(); });

@@ -14,6 +14,7 @@ provides:
   - info-disclosure
 achieves:
   - privilege-escalation
+  - auth-bypass
 detection: >
   Sequential/enumerable ids accessed out of a user's normal set; one account
   reading many distinct object ids; 200s on objects another tenant owns.

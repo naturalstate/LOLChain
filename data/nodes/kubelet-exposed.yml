@@ -10,7 +10,8 @@ summary: >
 requires: []
 provides:
   - os-command-exec
-achieves: []
+achieves:
+  - remote-code-execution
 detection: >
   Access to :10250/:10255 from unexpected sources; /run and /exec kubelet endpoints
   invoked; anonymous API calls succeeding.

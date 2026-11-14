@@ -14,6 +14,7 @@ provides:
   - priv-esc
 achieves:
   - privilege-escalation
+  - auth-bypass
 detection: >
   Tokens with alg:none or switched algorithms; signature-verification failures;
   admin/role claims changed; many signature-brute-force attempts.

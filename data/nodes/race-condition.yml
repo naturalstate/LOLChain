@@ -11,7 +11,8 @@ summary: >
 requires: []
 provides:
   - auth-bypass
-achieves: []
+achieves:
+  - auth-bypass
 detection: >
   Bursts of near-simultaneous identical requests; negative balances or over-limit
   redemptions; one-time tokens used more than once.

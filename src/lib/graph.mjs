@@ -144,6 +144,24 @@ export function buildGraph() {
     }
   }
 
+  // --- Forward reachability per node (UI: gray out unreachable goals/throughs) ---
+  // Collapse parallel edges to a simple adjacency, then DFS from every node.
+  const adj = new Map(nodes.map((n) => [n.slug, new Set()]));
+  for (const e of edges) adj.get(e.from)?.add(e.to);
+  for (const n of nodes) {
+    const seen = new Set([n.slug]);
+    const stack = [n.slug];
+    while (stack.length) {
+      const cur = stack.pop();
+      for (const to of adj.get(cur) ?? []) if (!seen.has(to)) { seen.add(to); stack.push(to); }
+    }
+    seen.delete(n.slug);
+    n.reachNodes = [...seen];
+    const gset = new Set(n.achieves);
+    for (const t of seen) for (const gg of nodeBySlug.get(t).achieves) gset.add(gg);
+    n.reachGoals = [...gset];
+  }
+
   // --- Stats ---
   const curated = edges.filter((e) => e.type === 'curated');
   const byCategory = {};

@@ -12,7 +12,8 @@ requires:
   - os-command-exec
 provides:
   - service-account-token
-achieves: []
+achieves:
+  - remote-code-execution
 detection: >
   Reads of the serviceaccount token path; API-server calls from pod IPs using the
   default SA; unexpected kubectl-like traffic to the API server.

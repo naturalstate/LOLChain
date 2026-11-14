@@ -8,8 +8,7 @@ summary: >
   A pre-auth SSRF in Exchange is chained to an authentication bypass, then
   arbitrary file write, dropping a webshell for RCE as SYSTEM. Archetypal
   low-severity-primitive to full-compromise chain.
-requires:
-  - server-side-request
+requires: []
 provides:
   - auth-bypass
   - arbitrary-file-write

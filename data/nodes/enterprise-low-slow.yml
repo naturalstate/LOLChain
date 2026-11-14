@@ -14,7 +14,8 @@ provides:
   - internal-network-reach
   - lateral-movement
   - domain-credentials
-achieves: []
+achieves:
+  - internal-network-access
 detection: >
   Recon of internal hostnames from error messages; app service accounts reaching
   internal APIs; credential use spreading across hosts; unusual LDAP/Kerberos activity.
