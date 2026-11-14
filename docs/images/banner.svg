@@ -55,9 +55,9 @@
 
   <!-- stats -->
   <text x="58" y="352" font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="15">
-    <tspan fill="#e4e8f0" font-weight="700">65</tspan><tspan fill="#5b6374"> vulns</tspan>
-    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">57</tspan><tspan fill="#5b6374"> chains</tspan>
-    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">102</tspan><tspan fill="#5b6374"> derived</tspan>
+    <tspan fill="#e4e8f0" font-weight="700">74</tspan><tspan fill="#5b6374"> vulns</tspan>
+    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">68</tspan><tspan fill="#5b6374"> chains</tspan>
+    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">143</tspan><tspan fill="#5b6374"> derived</tspan>
     <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">7</tspan><tspan fill="#5b6374"> categories</tspan>
   </text>
 

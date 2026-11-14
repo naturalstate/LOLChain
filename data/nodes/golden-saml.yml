@@ -1,0 +1,43 @@
+id: golden-saml
+name: Golden SAML
+slug: golden-saml
+tier: expert
+category: network
+aliases: [golden-saml, saml-forgery, adfs-token-signing]
+summary: >
+  Having compromised the identity provider (e.g. the ADFS token-signing private key),
+  the attacker forges SAML assertions for any user — including admins — and authenticates
+  to any federated cloud/SSO application, without touching those apps' own controls.
+  (Used in the SolarWinds intrusions.)
+requires:
+  - priv-esc
+provides:
+  - auth-bypass
+  - cloud-credentials
+  - lateral-movement
+achieves:
+  - cloud-account-compromise
+detection: >
+  SAML logins without a matching IdP authentication event; tokens signed outside the
+  IdP; access to the token-signing key/cert; anomalous federation for privileged users.
+remediation: >
+  Protect and rotate token-signing keys (HSM); monitor federation and sign-in logs for
+  assertions lacking IdP auth; limit who can read ADFS/IdP key material; short token
+  lifetimes and strong conditional access.
+mitre: [T1606.002]
+references:
+  - title: "MITRE ATT&CK — Forge Web Credentials: SAML Tokens (T1606.002)"
+    url: https://attack.mitre.org/techniques/T1606/002/
+chains:
+  - to: cloud-data-access
+    via: [cloud-credentials]
+    outcome: Forge an admin assertion into cloud apps and read their data.
+    tier: expert
+    difficulty: hard
+    documented: false
+  - to: cloud-iam-privesc
+    via: [cloud-credentials]
+    outcome: Assume privileged cloud roles via the forged federated identity.
+    tier: expert
+    difficulty: hard
+    documented: false

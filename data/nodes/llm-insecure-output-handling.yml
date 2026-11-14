@@ -1,0 +1,30 @@
+id: llm-insecure-output-handling
+name: Insecure LLM Output Handling
+slug: llm-insecure-output-handling
+tier: advanced
+category: llm
+aliases: [llm-output-handling, llm05, unsafe-llm-output]
+summary: >
+  The application passes LLM output to a downstream sink without validation — rendering
+  it as HTML (stored XSS), feeding it to a shell or `eval`, or using it to build a
+  query. An attacker who steers the model (via injection) thus reaches the sink's
+  privileges. (OWASP LLM05: Improper Output Handling.)
+requires:
+  - llm-tool-access
+provides:
+  - js-exec-victim-browser
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  LLM responses containing scripts/markup/commands reaching eval, shells, or the DOM;
+  template or query construction from raw model output; XSS/command patterns in
+  model-generated content.
+remediation: >
+  Treat model output as untrusted input: encode/sanitise per sink, parameterise queries,
+  never eval or shell raw output, sandbox tools, and apply least privilege to anything
+  the model can drive.
+references:
+  - title: "OWASP Top 10 for LLM Applications (LLM05: Improper Output Handling)"
+    url: https://genai.owasp.org/llm-top-10/
+chains: []

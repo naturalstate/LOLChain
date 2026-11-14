@@ -1,0 +1,34 @@
+id: fortios-sslvpn-rce
+name: FortiOS SSL-VPN Pre-Auth RCE
+slug: fortios-sslvpn-rce
+tier: expert
+category: network
+aliases: [fortios, fortigate, sslvpn, cve-2024-21762, cve-2022-42475]
+summary: >
+  A memory-corruption flaw in the FortiOS SSL-VPN daemon (sslvpnd) gives
+  unauthenticated, pre-auth remote code execution on an internet-facing FortiGate —
+  an edge foothold straight into the internal network. (CVE-2024-21762, CVSS 9.8.)
+requires: []
+provides:
+  - os-command-exec
+  - internal-network-reach
+achieves:
+  - remote-code-execution
+  - internal-network-access
+detection: >
+  Crashes/restarts of sslvpnd; crafted SSL-VPN requests; outbound connections from the
+  firewall; new admin accounts or config changes; disabled logging on the appliance.
+remediation: >
+  Patch FortiOS promptly; disable SSL-VPN if unused; restrict management/VPN exposure;
+  monitor appliance integrity and config; rotate credentials reachable from the device.
+mitre: [T1190]
+references:
+  - title: "Fortinet PSIRT FG-IR-24-015 — Out-of-bound write in sslvpnd (CVE-2024-21762)"
+    url: https://www.fortiguard.com/psirt/FG-IR-24-015
+chains:
+  - to: config-secret-harvest
+    via: [os-command-exec]
+    outcome: Harvest credentials and config from the compromised firewall to move inward.
+    tier: advanced
+    difficulty: medium
+    documented: false

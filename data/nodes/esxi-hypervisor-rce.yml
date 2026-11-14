@@ -1,0 +1,41 @@
+id: esxi-hypervisor-rce
+name: Hypervisor (ESXi) Compromise
+slug: esxi-hypervisor-rce
+tier: expert
+category: network
+aliases: [esxi, esxiargs, hypervisor, vmware-slp]
+summary: >
+  An exposed or unpatched VMware ESXi host (e.g. the OpenSLP flaws) is exploited for
+  code execution on the hypervisor. From there every guest VM is reachable at the disk
+  level — the fastest route to mass, estate-wide encryption. (ESXiArgs campaign, 2023.)
+requires: []
+provides:
+  - os-command-exec
+  - lateral-movement
+achieves:
+  - remote-code-execution
+detection: >
+  ESXi management/SLP ports exposed; shell access and unexpected processes on hosts;
+  mass VM power-off; encryption of .vmdk/.vmx files; rogue SSH enabled on ESXi.
+remediation: >
+  Patch ESXi and disable OpenSLP/unneeded services; isolate the management network;
+  restrict and MFA host access; immutable backups of VMs; monitor host integrity.
+mitre: [T1190, T1486]
+references:
+  - title: "CISA AA23-039A — ESXiArgs ransomware"
+    url: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-039a
+chains:
+  - to: ransomware-deployment
+    via: [lateral-movement]
+    outcome: Encrypt every guest VM from the hypervisor for estate-wide impact.
+    tier: expert
+    difficulty: medium
+    documented: true
+    references:
+      - https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-039a
+  - to: config-secret-harvest
+    via: [os-command-exec]
+    outcome: Pull stored credentials from the host and guest configs.
+    tier: advanced
+    difficulty: medium
+    documented: false

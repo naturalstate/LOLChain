@@ -1,0 +1,45 @@
+id: cloud-cross-account
+name: Cross-Account Role Assumption
+slug: cloud-cross-account
+tier: advanced
+category: cloud
+aliases: [assume-role-chaining, cross-account, confused-deputy, role-pivot]
+summary: >
+  With credentials in one cloud account, an over-trusting trust policy (or a confused
+  deputy / external-ID gap) lets the attacker sts:AssumeRole into another account or a
+  more privileged role — turning a single foothold into movement across the whole cloud
+  estate.
+requires:
+  - cloud-credentials
+provides:
+  - cloud-credentials
+  - lateral-movement
+achieves:
+  - cloud-account-compromise
+detection: >
+  AssumeRole across account boundaries from unexpected principals; role chaining; use
+  of roles that trust wildcards or lack external-ID conditions; CloudTrail spikes in
+  AssumeRole.
+remediation: >
+  Scope trust policies to specific principals with external IDs/conditions; deny role
+  chaining where unneeded; separate accounts by blast radius; alert on cross-account
+  AssumeRole.
+mitre: [T1078.004, T1098.003]
+references:
+  - title: "AWS — IAM roles terms and concepts (AssumeRole / trust policies)"
+    url: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html
+  - title: "Rhino Security — AWS privilege escalation methods"
+    url: https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
+chains:
+  - to: cloud-data-access
+    via: [cloud-credentials]
+    outcome: Use the assumed role to read data stores in the target account.
+    tier: advanced
+    difficulty: medium
+    documented: false
+  - to: cloud-iam-privesc
+    via: [cloud-credentials]
+    outcome: Chain into an administrative role in the target account.
+    tier: advanced
+    difficulty: medium
+    documented: false

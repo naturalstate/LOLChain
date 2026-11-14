@@ -1,0 +1,46 @@
+id: ivanti-connect-secure
+name: Ivanti Connect Secure Chain
+slug: ivanti-connect-secure
+tier: expert
+category: network
+aliases: [ivanti, pulse-secure, cve-2023-46805, cve-2024-21887]
+summary: >
+  Two chained zero-days in the Ivanti Connect Secure VPN — an authentication bypass
+  (CVE-2023-46805) plus a command injection (CVE-2024-21887) — give unauthenticated
+  RCE on the appliance, used to drop webshells and pivot into the internal network.
+  (Volexity, Jan 2024.)
+requires: []
+provides:
+  - os-command-exec
+  - arbitrary-file-write
+  - internal-network-reach
+achieves:
+  - remote-code-execution
+  - internal-network-access
+detection: >
+  Requests to restricted endpoints without auth; webshells in appliance web dirs
+  (GLASSTOKEN); tampered CGI binaries; the integrity checker failing; outbound from
+  the VPN appliance.
+remediation: >
+  Patch and factory-reset Ivanti appliances; run the integrity checker; rotate all
+  secrets/certs that touched the device; restrict management interfaces; monitor
+  appliance file integrity.
+mitre: [T1190]
+references:
+  - title: "Volexity — Active exploitation of Ivanti Connect Secure zero-days"
+    url: https://www.volexity.com/blog/2024/01/10/active-exploitation-of-two-zero-day-vulnerabilities-in-ivanti-connect-secure-vpn/
+chains:
+  - to: webshell-rce
+    via: [arbitrary-file-write]
+    outcome: Write a webshell to the appliance web path for durable command execution.
+    tier: expert
+    difficulty: medium
+    documented: true
+    references:
+      - https://www.volexity.com/blog/2024/01/10/active-exploitation-of-two-zero-day-vulnerabilities-in-ivanti-connect-secure-vpn/
+  - to: config-secret-harvest
+    via: [os-command-exec]
+    outcome: Harvest stored VPN/service credentials from the appliance configuration.
+    tier: advanced
+    difficulty: medium
+    documented: false

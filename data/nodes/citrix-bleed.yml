@@ -1,0 +1,36 @@
+id: citrix-bleed
+name: Citrix Bleed (NetScaler)
+slug: citrix-bleed
+tier: expert
+category: network
+aliases: [citrix-bleed, cve-2023-4966, netscaler]
+summary: >
+  An out-of-bounds read in Citrix NetScaler ADC/Gateway leaks session tokens from
+  appliance memory. Replaying a token resumes an authenticated session and bypasses
+  MFA entirely — no credentials needed. (CVE-2023-4966; LockBit used it against Boeing
+  and ICBC, 2023.)
+requires: []
+provides:
+  - read-session-token
+achieves:
+  - auth-bypass
+detection: >
+  Large/repeated requests to the vulnerable endpoint; session reuse from new IPs/ASNs;
+  sessions active without a matching authentication; impossible travel on NetScaler
+  sessions.
+remediation: >
+  Patch NetScaler; terminate all active sessions after patching (tokens persist);
+  bind sessions to client IP; monitor appliance memory-read patterns.
+mitre: [T1539]
+references:
+  - title: "CISA AA23-325A — LockBit exploiting Citrix Bleed (CVE-2023-4966)"
+    url: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-325a
+chains:
+  - to: session-hijack
+    via: [read-session-token]
+    outcome: Replay the leaked NetScaler session token to act as the authenticated user, past MFA.
+    tier: expert
+    difficulty: medium
+    documented: true
+    references:
+      - https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-325a

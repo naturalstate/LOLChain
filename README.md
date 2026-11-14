@@ -4,7 +4,7 @@
 
 <p align="center">
   <b><a href="https://naturalstate.github.io/LOLChain/">🔗 Live site</a></b>
-  &nbsp;·&nbsp; 65 vulns &nbsp;·&nbsp; 57 curated chains &nbsp;·&nbsp; 102 derived candidates &nbsp;·&nbsp; 7 categories
+  &nbsp;·&nbsp; 74 vulns &nbsp;·&nbsp; 68 curated chains &nbsp;·&nbsp; 143 derived candidates &nbsp;·&nbsp; 7 categories
 </p>
 
 ---
@@ -166,6 +166,12 @@ each node cites its sources (references are never invented):
 | **Midnight Blizzard** (2023-24) | malicious OAuth consent → persistent mailbox/API access | `malicious-oauth-consent` → `oauth-token-theft` |
 | **Siloscape** (2021) | container escape → Kubernetes node → cluster | `container-escape` → `k8s-node-to-cluster-admin` |
 | **Human-operated ransomware** (CISA #StopRansomware) | phishing payload → credential dumping → AD takeover → mass encryption | `phishing-payload-rce` → `credential-dumping` → `ad-domain-takeover` → `ransomware-deployment` |
+| **Citrix Bleed** (CVE-2023-4966, LockBit) | session-token leak from NetScaler → session hijack past MFA | `citrix-bleed` → `session-hijack` |
+| **Ivanti Connect Secure** (CVE-2023-46805 + CVE-2024-21887) | auth bypass + command injection → unauth RCE on the VPN → internal | `ivanti-connect-secure` → `webshell-rce` |
+| **FortiOS SSL-VPN** (CVE-2024-21762) | pre-auth RCE on an edge firewall → internal network | `fortios-sslvpn-rce` |
+| **ESXiArgs** (2023) | exposed ESXi host → hypervisor RCE → mass VM encryption | `esxi-hypervisor-rce` → `ransomware-deployment` |
+| **Dependency Confusion** (Birsan, 2021) | malicious public package overrides an internal name → build RCE | `dependency-confusion` → `cicd-secret-exfil` |
+| **Golden SAML** (SolarWinds) | forged SAML from a stolen IdP key → any federated cloud app | `golden-saml` → `cloud-iam-privesc` |
 
 The recurring hinge across most of them: a "boring" foothold (SSRF, an exposed
 dashboard, a leaked key, a stolen token, code exec on a host) is converted into
@@ -246,7 +252,7 @@ docs/images/              # README graphics
 ## Status
 
 - [x] **Phase 0** — pipeline skeleton (schema, vocab, seed nodes, build, filterable UI).
-- [x] **Phase 1** — dataset (65 vulns, 57 curated chains, 7 categories).
+- [x] **Phase 1** — dataset (74 vulns, 68 curated chains, 7 categories).
 - [x] **Phase 2** — "I have X" forward query + facets + per-node pages.
 - [x] **Phase 3** — goal-directed + constrained + backward pathfinding; derived chains.
 - [x] **Phase 4** — interactive graph visualization (Cytoscape).

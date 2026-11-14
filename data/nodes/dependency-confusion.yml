@@ -1,0 +1,39 @@
+id: dependency-confusion
+name: Dependency Confusion
+slug: dependency-confusion
+tier: advanced
+category: cicd
+aliases: [dependency-confusion, substitution-attack, namespace-confusion]
+summary: >
+  An attacker publishes a malicious public package using the same name as a company's
+  private/internal package and a higher version. Misconfigured installers prefer the
+  public one, so build and developer machines fetch and execute attacker code.
+  (Alex Birsan, 2021 — hit Apple, Microsoft, PayPal and dozens more.)
+requires: []
+provides:
+  - ci-runner-exec
+  - os-command-exec
+  - ci-secrets
+achieves:
+  - remote-code-execution
+detection: >
+  Installs of internal package names from public registries; unexpected outbound from
+  build/dev during dependency resolution; package versions jumping far ahead; post-install
+  scripts phoning home.
+remediation: >
+  Reserve internal namespaces publicly; pin registries/scopes per package; use a single
+  private proxy with explicit upstreams; verify package provenance; disable install
+  scripts where possible.
+mitre: [T1195.001]
+references:
+  - title: "Alex Birsan — Dependency Confusion (2021)"
+    url: https://medium.com/@alex.birsan/dependency-confusion-4a5d60fec610
+chains:
+  - to: cicd-secret-exfil
+    via: [ci-secrets]
+    outcome: Code running on the build runner exfiltrates the pipeline's secrets.
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://medium.com/@alex.birsan/dependency-confusion-4a5d60fec610

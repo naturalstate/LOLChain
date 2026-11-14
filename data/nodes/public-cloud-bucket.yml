@@ -1,0 +1,30 @@
+id: public-cloud-bucket
+name: Public Cloud Storage Bucket
+slug: public-cloud-bucket
+tier: basic
+category: cloud
+aliases: [open-s3, public-bucket, open-blob, exposed-gcs]
+summary: >
+  A misconfigured object store (S3 bucket, Azure Blob container, GCS bucket) set to
+  public or over-broad access lets anyone list and download its contents — no exploit,
+  just a URL. One of the most common real-world data-exposure vectors.
+requires: []
+provides:
+  - db-read
+  - info-disclosure
+achieves:
+  - data-breach
+detection: >
+  Buckets with public/all-authenticated ACLs or policies; anonymous GETs at scale;
+  listing of many objects from one source; cloud posture scanners flagging public
+  storage.
+remediation: >
+  Block public access at the account level; default-deny bucket policies; encrypt and
+  log access; continuous posture scanning; least-privilege and signed URLs for sharing.
+mitre: [T1530]
+references:
+  - title: "MITRE ATT&CK — Data from Cloud Storage (T1530)"
+    url: https://attack.mitre.org/techniques/T1530/
+  - title: "AWS — S3 security best practices"
+    url: https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html
+chains: []
