@@ -1,0 +1,69 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Scope & Ethics" description="Authorized-use scope and ethics for LolChain.">
+  <div class="wrap">
+    <div class="crumb"><a href="/">LolChain</a> / SCOPE &amp; ETHICS</div>
+    <section class="hero" style="padding:30px 0 10px">
+      <div class="label kicker">Scope &amp; ethics</div>
+      <h1 style="font-size:clamp(28px,4.5vw,44px)">Authorized use only.</h1>
+    </section>
+
+    <article class="prose">
+      <div class="callout">
+        <strong>LolChain is a conceptual reference, not an attack toolkit.</strong> Entries
+        describe how one weakness hands capabilities to the next — the <em>handoff</em>,
+        its outcome, detection, and remediation. They are not copy-paste weaponized
+        exploit code. Use the ideas only where you are authorized to.
+      </div>
+
+      <h2>Who this is for</h2>
+      <ul>
+        <li><strong>Penetration testers &amp; red teams</strong> — reason about where a
+          low-severity finding actually leads, and prioritise accordingly.</li>
+        <li><strong>Defenders &amp; blue teams</strong> — see which single link to break;
+          a chain dies at its weakest step.</li>
+        <li><strong>Engineers &amp; educators</strong> — understand how real breaches are
+          assembled from ordinary bugs.</li>
+      </ul>
+
+      <h2>Rules of engagement</h2>
+      <ul>
+        <li>Only test systems you <strong>own</strong> or have <strong>explicit written
+          authorization</strong> to assess, within the agreed scope.</li>
+        <li>Follow responsible/coordinated disclosure for anything you find.</li>
+        <li>Respect the law and the rules of any bug-bounty or engagement contract.</li>
+        <li>This site provides no access, no credentials, and no exploit payloads.</li>
+      </ul>
+
+      <h2>Defensive parity</h2>
+      <p>
+        Every node carries <code>detection</code> and <code>remediation</code>. The same
+        graph that shows an attack path shows defenders where to cut it. Breaking one
+        capability handoff breaks every chain that depends on it — fix the shared link
+        and you kill many paths at once.
+      </p>
+
+      <div class="callout good">
+        <strong>Derived chains are suggestions, not facts.</strong> Edges the build
+        infers from capability tags are shown as <em>derived · unverified</em>. They are
+        plausible handoffs to investigate — verify before relying on any of them.
+      </div>
+
+      <h2>Attribution</h2>
+      <p>
+        Curated chains cite their sources (PortSwigger, OWASP, vendor advisories,
+        public research). References are never invented. If you spot a wrong or missing
+        citation, please open a correction.
+      </p>
+
+      <h2>No warranty</h2>
+      <p>
+        The information here is provided as-is for lawful, authorized security work and
+        education. The maintainers accept no liability for misuse.
+      </p>
+
+      <p style="margin-top:28px"><a href="/about/">→ How LolChain's model works</a></p>
+    </article>
+  </div>
+</Base>

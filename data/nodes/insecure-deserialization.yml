@@ -1,0 +1,27 @@
+id: insecure-deserialization
+name: Insecure Deserialization
+slug: insecure-deserialization
+tier: advanced
+category: web
+aliases: [deserialization, deser, gadget-chain]
+summary: >
+  The application deserializes attacker-controlled data, letting a gadget chain
+  (ysoserial, .NET, Python pickle, PHP POP) drive code execution during object
+  reconstruction.
+requires:
+  - attacker-controlled-deserialization
+provides:
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  Serialized blobs in cookies/params (rO0 for Java, base64 pickle, PHP O:); known
+  gadget class names; deserialization followed by process spawn.
+remediation: >
+  Never deserialize untrusted input; use data-only formats (JSON) with strict
+  schemas, allowlist classes, sign/encrypt serialized state.
+mitre: [T1190]
+references:
+  - title: PortSwigger - Insecure deserialization
+    url: https://portswigger.net/web-security/deserialization
+chains: []

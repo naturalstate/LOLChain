@@ -1,0 +1,330 @@
+---
+import Base from '../layouts/Base.astro';
+import { buildGraph } from '../lib/graph.mjs';
+
+const { nodes, capabilities, capabilityGroups, goals } = buildGraph();
+const nodeChoices = [...nodes].sort((a, b) => a.name.localeCompare(b.name));
+const goalChoices = [...goals].sort((a, b) => a.label.localeCompare(b.label));
+const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter((c) => c.group === g.id) }));
+---
+<Base title="Query" description="Tell LolChain what you have or want; see the chains between.">
+  <div class="wrap">
+    <section class="hero" style="padding-bottom:10px">
+      <div class="label kicker">Query engine</div>
+      <h1 style="font-size:clamp(28px,4.5vw,44px)">Trace the chains.</h1>
+    </section>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="forward">I have X</button>
+      <button class="tab" data-tab="goal">X → goal Z</button>
+      <button class="tab" data-tab="backward">I want Z</button>
+    </div>
+
+    <div class="graph-legend">
+      <span class="lg"><span class="sw" style="background:#4ea1d3"></span>web</span>
+      <span class="lg"><span class="sw" style="background:#d9a441"></span>cloud</span>
+      <span class="lg"><span class="sw" style="background:#56b877"></span>k8s</span>
+      <span class="lg"><span class="sw" style="background:#e5484d"></span>cicd</span>
+      <span class="lg"><span class="sw" style="background:#a06cd5"></span>llm</span>
+      <span class="lg"><span class="sw" style="background:#3fb6b2"></span>mobile</span>
+      <span class="lg"><span class="sw" style="background:#8a93a6"></span>network</span>
+      <span class="lg"><span class="ln"></span>curated</span>
+      <span class="lg"><span class="ln dash"></span>derived</span>
+      <span class="lg"><span class="sw" style="background:transparent;border:2px solid #e5484d"></span>goal</span>
+    </div>
+
+    <!-- FORWARD -->
+    <div class="panel active" id="panel-forward">
+      <div class="mode-layout">
+        <aside class="controls">
+          <div class="control-group">
+            <div class="ghead"><span class="label">Start from a vuln</span></div>
+            <select id="f-node">
+              <option value="">— none —</option>
+              {nodeChoices.map((n) => <option value={n.slug}>{n.name}</option>)}
+            </select>
+          </div>
+          <div class="control-group">
+            <div class="ghead"><span class="label">…or capabilities you hold</span></div>
+            {capGroups.map((g) => g.caps.length > 0 && (
+              <>
+                <div class="cap-sub">{g.label}</div>
+                <div class="chip-pick">
+                  {g.caps.map((c) => <button class="pick" type="button" data-cap={c.slug} title={c.description}>{c.label}</button>)}
+                </div>
+              </>
+            ))}
+          </div>
+          <div class="btn-row"><button class="btn" id="f-reset" type="button">Reset</button></div>
+        </aside>
+        <section>
+          <div class="q-summary" id="f-summary">Pick a starting point to trace chains.</div>
+          <div class="q-goals" id="f-goals"></div>
+          <div id="f-graph" class="graphbox" style="display:none"></div>
+          <div id="f-results"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- GOAL-DIRECTED -->
+    <div class="panel" id="panel-goal">
+      <div class="mode-layout">
+        <aside class="controls">
+          <div class="control-group">
+            <div class="ghead"><span class="label">Start from a vuln</span></div>
+            <select id="g-node"><option value="">— pick —</option>{nodeChoices.map((n) => <option value={n.slug}>{n.name}</option>)}</select>
+          </div>
+          <div class="control-group">
+            <div class="ghead"><span class="label">Goal</span></div>
+            <select id="g-goal"><option value="">— pick —</option>{goalChoices.map((g) => <option value={g.slug}>{g.label}</option>)}</select>
+          </div>
+          <div class="control-group">
+            <div class="ghead"><span class="label">Through (optional)</span></div>
+            <select id="g-through"><option value="">— any —</option>{nodeChoices.map((n) => <option value={n.slug}>{n.name}</option>)}</select>
+          </div>
+          <div class="btn-row"><button class="btn" id="g-reset" type="button">Reset</button></div>
+        </aside>
+        <section>
+          <div class="q-summary" id="g-summary">Pick a start vuln and a goal.</div>
+          <div id="g-graph" class="graphbox" style="display:none"></div>
+          <div id="g-results"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- BACKWARD -->
+    <div class="panel" id="panel-backward">
+      <div class="mode-layout">
+        <aside class="controls">
+          <div class="control-group">
+            <div class="ghead"><span class="label">I want to achieve</span></div>
+            <select id="b-goal"><option value="">— pick —</option>{goalChoices.map((g) => <option value={g.slug}>{g.label}</option>)}</select>
+          </div>
+        </aside>
+        <section>
+          <div class="q-summary" id="b-summary">Pick a goal to see what gives it and what each step needs.</div>
+          <div id="b-graph" class="graphbox" style="display:none"></div>
+          <div id="b-results"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+  <script>
+    import { forwardReach } from '../lib/query.mjs';
+    import { findPaths, findBackward, nodesAchieving } from '../lib/path.mjs';
+
+    let graph = null, capLabel = {}, goalLabel = {}, nodeMeta = {};
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+    // --- graph (cytoscape) ---
+    const CAT_COLOR = { web:'#4ea1d3', cloud:'#d9a441', kubernetes:'#56b877', cicd:'#e5484d', llm:'#a06cd5', mobile:'#3fb6b2', network:'#8a93a6', start:'#e4e8f0' };
+    const GRAPH_STYLE = [
+      { selector: 'node', style: {
+        'background-color': (el) => CAT_COLOR[el.data('cat')] ?? '#8a93a6',
+        'label': 'data(label)', 'color': '#0a0e14', 'font-family': 'JetBrains Mono, monospace',
+        'font-size': 9, 'font-weight': 600, 'text-valign': 'center', 'text-halign': 'center',
+        'text-wrap': 'wrap', 'text-max-width': 96, 'shape': 'round-rectangle',
+        'width': 'label', 'height': 'label', 'padding': 8 } },
+      { selector: 'node[goal = 1]', style: { 'border-width': 3, 'border-color': '#e5484d' } },
+      { selector: 'node[start = 1]', style: { 'shape': 'ellipse', 'border-width': 2, 'border-color': '#e4e8f0' } },
+      { selector: 'edge', style: {
+        'width': 1.5, 'line-color': '#4a5162', 'target-arrow-color': '#4a5162',
+        'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'arrow-scale': 0.9,
+        'label': 'data(via)', 'font-family': 'JetBrains Mono, monospace', 'font-size': 7,
+        'color': '#8a93a6', 'text-background-color': '#0f141c', 'text-background-opacity': 0.9,
+        'text-background-padding': 2 } },
+      { selector: 'edge[curated = 0]', style: { 'line-style': 'dashed', 'line-color': '#333b49', 'target-arrow-color': '#333b49' } },
+    ];
+    const cyById = {};
+    function drawGraph(id, els, roots) {
+      const container = document.getElementById(id);
+      if (!container) return;
+      if (typeof cytoscape === 'undefined' || !els.length) { container.style.display = 'none'; return; }
+      container.style.display = 'block';
+      let cy = cyById[id];
+      if (!cy) cy = cyById[id] = cytoscape({ container, style: GRAPH_STYLE, wheelSensitivity: 0.2, minZoom: 0.2, maxZoom: 2.5 });
+      cy.elements().remove();
+      cy.add(els);
+      cy.layout({ name: 'breadthfirst', directed: true, padding: 18, spacingFactor: 1.15, roots: roots?.length ? roots : undefined }).run();
+      cy.fit(undefined, 24);
+    }
+    function pushNode(els, seen, slug, extra = {}) {
+      if (seen.has(slug)) return; seen.add(slug);
+      const n = nodeMeta[slug];
+      els.push({ data: { id: slug, label: n.name, cat: n.category, goal: (n.achieves ?? []).length ? 1 : 0, ...extra } });
+    }
+    function pathElements(paths) {
+      const seen = new Set(), eseen = new Set(), els = [];
+      for (const p of paths) {
+        p.nodes.forEach((s) => pushNode(els, seen, s));
+        p.edges.forEach((e) => {
+          const id = `${e.from}>${e.to}`;
+          if (eseen.has(id)) return; eseen.add(id);
+          els.push({ data: { id, source: e.from, target: e.to, via: e.via.map((v) => capLabel[v] ?? v).join(', '), curated: e.type === 'curated' ? 1 : 0 } });
+        });
+      }
+      return els;
+    }
+
+    // --- shared path renderer ---
+    function pathCard(p, goalSet) {
+      const steps = p.nodes.map((slug, i) => {
+        const n = nodeMeta[slug];
+        const isGoalEnd = i === p.nodes.length - 1 && (n.achieves ?? []).some((g) => goalSet.has(g));
+        let h = `<a class="step ${isGoalEnd ? 'goal' : ''}" href="/node/${slug}/">${esc(n.name)}</a>`;
+        if (i < p.edges.length) {
+          const e = p.edges[i];
+          const via = e.via.map((v) => capLabel[v] ?? v).join(', ');
+          h += `<span class="arrow ${e.type === 'curated' ? '' : 'derived'}"><span class="via">${esc(via)}</span><span class="glyph">▶</span></span>`;
+        }
+        return h;
+      }).join('');
+      const cls = p.documented ? 'documented' : (p.allCurated ? '' : 'partial');
+      const tag = p.documented
+        ? '<span class="chip doc">documented</span>'
+        : (p.allCurated ? '<span class="chip">curated</span>' : '<span class="chip derived">includes derived</span>');
+      const incomplete = p.complete === false ? '<span class="chip derived">partial</span>' : '';
+      return `<div class="pathcard ${cls}"><div class="pathmeta">${tag}${incomplete}<span class="len">${p.length} hop(s)</span></div><div class="pathflow">${steps}</div></div>`;
+    }
+
+    // --- forward mode ---
+    const fState = { node: '', caps: new Set() };
+    function renderForward() {
+      const summary = document.getElementById('f-summary');
+      const goalsEl = document.getElementById('f-goals');
+      const results = document.getElementById('f-results');
+      if (!graph || (!fState.node && !fState.caps.size)) {
+        summary.textContent = 'Pick a starting point to trace chains.'; goalsEl.innerHTML = ''; results.innerHTML = ''; return;
+      }
+      const out = forwardReach(graph, { startNodes: fState.node ? [fState.node] : [], startCaps: [...fState.caps] });
+      const label = fState.node ? nodeMeta[fState.node].name : [...fState.caps].map((c) => capLabel[c]).join(' + ');
+      const uGoals = [...new Set(out.goalsReached.map((g) => g.goal))];
+      summary.innerHTML = `From <b>${esc(label)}</b> you can reach <b>${out.activated.length}</b> vuln(s) and <b>${uGoals.length}</b> goal(s).`;
+      goalsEl.innerHTML = uGoals.map((g) => `<span class="chip goal">${esc(goalLabel[g] ?? g)}</span>`).join('');
+
+      // graph
+      const gseen = new Set(), gedge = new Set(), gels = [];
+      let rootId = null;
+      if (fState.node) pushNode(gels, gseen, fState.node, { start: 1 });
+      else { rootId = '__held'; gels.push({ data: { id: rootId, label: label || 'held caps', cat: 'start', start: 1 } }); }
+      for (const r of out.activated) {
+        pushNode(gels, gseen, r.slug);
+        if (r.predecessors.length) {
+          for (const pr of r.predecessors) {
+            const eid = `${pr.node}>${r.slug}`;
+            if (gedge.has(eid)) continue; gedge.add(eid);
+            pushNode(gels, gseen, pr.node);
+            gels.push({ data: { id: eid, source: pr.node, target: r.slug, via: capLabel[pr.cap] ?? pr.cap, curated: r.curated ? 1 : 0 } });
+          }
+        } else {
+          const src = fState.node || rootId;
+          const eid = `${src}>${r.slug}`;
+          if (!gedge.has(eid)) { gedge.add(eid); gels.push({ data: { id: eid, source: src, target: r.slug, via: '', curated: r.curated ? 1 : 0 } }); }
+        }
+      }
+      drawGraph('f-graph', gels, [fState.node || rootId]);
+
+      if (!out.activated.length) { results.innerHTML = '<div class="q-empty">Terminal node — nothing chains onward.</div>'; return; }
+      const byDepth = {};
+      for (const r of out.activated) (byDepth[r.depth] ??= []).push(r);
+      let html = '';
+      for (const d of Object.keys(byDepth).sort((a, b) => a - b)) {
+        html += `<div class="hopgroup"><div class="hophead">Hop ${d}</div>`;
+        for (const r of byDepth[d]) {
+          const n = nodeMeta[r.slug];
+          const via = r.viaCaps.map((c) => `<span class="chip cap">${esc(capLabel[c] ?? c)}</span>`).join('');
+          const preds = [...new Set(r.predecessors.map((p) => p.node))].map((p) => nodeMeta[p]?.name ?? p);
+          const from = preds.length ? `from ${esc(preds.join(', '))}` : 'from held capabilities';
+          const tag = r.curated ? '<span class="chip doc">documented</span>' : '<span class="chip derived">derived · unverified</span>';
+          const goals = (n.achieves ?? []).map((g) => `<span class="chip goal">${esc(goalLabel[g] ?? g)}</span>`).join('');
+          const outcome = r.curated && r.outcome ? `<div class="rout">${esc(r.outcome)}</div>` : '';
+          html += `<a class="res ${r.curated ? '' : 'derived'}" href="/node/${r.slug}/"><div class="rhead"><span class="rname">${esc(n.name)}</span><span class="chip tier-${n.tier}">${n.tier}</span><span class="cat">${n.category}</span>${goals}</div><div class="rvia"><span class="label">via</span>${via}${tag}</div><div class="rfrom">${from}</div>${outcome}</a>`;
+        }
+        html += '</div>';
+      }
+      results.innerHTML = html;
+    }
+
+    // --- goal-directed mode ---
+    const gState = { node: '', goal: '', through: '' };
+    function renderGoal() {
+      const summary = document.getElementById('g-summary');
+      const results = document.getElementById('g-results');
+      if (!graph || !gState.node || !gState.goal) {
+        summary.textContent = 'Pick a start vuln and a goal.'; results.innerHTML = ''; return;
+      }
+      const paths = findPaths(graph, { start: gState.node, goalSlugs: [gState.goal], through: gState.through || null, maxDepth: 5 });
+      const goalSet = new Set([gState.goal]);
+      const thru = gState.through ? ` through <b>${esc(nodeMeta[gState.through].name)}</b>` : '';
+      summary.innerHTML = `<b>${paths.length}</b> path(s) from <b>${esc(nodeMeta[gState.node].name)}</b> to <b>${esc(goalLabel[gState.goal])}</b>${thru}.`;
+      results.innerHTML = paths.length
+        ? paths.map((p) => pathCard(p, goalSet)).join('')
+        : '<div class="q-empty">No path within 5 hops. Try removing the "through" constraint or a different start.</div>';
+      drawGraph('g-graph', pathElements(paths), gState.node ? [gState.node] : undefined);
+    }
+
+    // --- backward mode ---
+    const bState = { goal: '' };
+    function renderBackward() {
+      const summary = document.getElementById('b-summary');
+      const results = document.getElementById('b-results');
+      if (!graph || !bState.goal) { summary.textContent = 'Pick a goal to see what gives it and what each step needs.'; results.innerHTML = ''; return; }
+      const achievers = nodesAchieving(graph, [bState.goal]);
+      const res = findBackward(graph, { goalSlugs: [bState.goal], maxDepth: 5 });
+      const goalSet = new Set([bState.goal]);
+      summary.innerHTML = `<b>${esc(goalLabel[bState.goal])}</b> is achieved by <b>${achievers.length}</b> vuln(s). Entry paths below.`;
+      const byGoalNode = {};
+      for (const r of res) (byGoalNode[r.goalNode] ??= []).push(r);
+      let html = '';
+      for (const gn of achievers) {
+        const list = byGoalNode[gn] ?? [];
+        html += `<div class="goal-node-head">achieved by <b>${esc(nodeMeta[gn].name)}</b></div>`;
+        html += list.length ? list.map((p) => pathCard(p, goalSet)).join('')
+          : `<div class="pathcard"><div class="pathflow"><a class="step goal" href="/node/${gn}/">${esc(nodeMeta[gn].name)}</a></div></div>`;
+      }
+      results.innerHTML = html;
+      drawGraph('b-graph', pathElements(res), undefined);
+    }
+
+    // --- wiring ---
+    function wire() {
+      document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach((x) => x.classList.remove('active'));
+        t.classList.add('active');
+        document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+      }));
+
+      document.getElementById('f-node').addEventListener('change', (e) => { fState.node = e.target.value; renderForward(); });
+      document.querySelectorAll('#panel-forward .pick').forEach((b) => b.addEventListener('click', () => {
+        const c = b.dataset.cap;
+        if (fState.caps.has(c)) { fState.caps.delete(c); b.classList.remove('sel'); } else { fState.caps.add(c); b.classList.add('sel'); }
+        renderForward();
+      }));
+      document.getElementById('f-reset').addEventListener('click', () => {
+        fState.node = ''; fState.caps.clear(); document.getElementById('f-node').value = '';
+        document.querySelectorAll('#panel-forward .pick.sel').forEach((b) => b.classList.remove('sel')); renderForward();
+      });
+
+      document.getElementById('g-node').addEventListener('change', (e) => { gState.node = e.target.value; renderGoal(); });
+      document.getElementById('g-goal').addEventListener('change', (e) => { gState.goal = e.target.value; renderGoal(); });
+      document.getElementById('g-through').addEventListener('change', (e) => { gState.through = e.target.value; renderGoal(); });
+      document.getElementById('g-reset').addEventListener('click', () => {
+        gState.node = gState.goal = gState.through = '';
+        ['g-node', 'g-goal', 'g-through'].forEach((id) => (document.getElementById(id).value = '')); renderGoal();
+      });
+
+      document.getElementById('b-goal').addEventListener('change', (e) => { bState.goal = e.target.value; renderBackward(); });
+    }
+
+    fetch('/graph.json').then((r) => r.json()).then((g) => {
+      graph = g;
+      capLabel = Object.fromEntries(g.capabilities.map((c) => [c.slug, c.label]));
+      goalLabel = Object.fromEntries(g.goals.map((x) => [x.slug, x.label]));
+      nodeMeta = Object.fromEntries(g.nodes.map((n) => [n.slug, n]));
+      wire();
+    });
+  </script>
+</Base>

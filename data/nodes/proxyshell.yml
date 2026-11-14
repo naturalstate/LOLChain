@@ -1,0 +1,35 @@
+id: proxyshell
+name: ProxyShell Pattern (Exchange)
+slug: proxyshell
+tier: expert
+category: network
+aliases: [proxyshell, cve-2021-34473]
+summary: >
+  Frontend path-confusion/SSRF reaches an authenticated backend without credentials,
+  then a mailbox-export primitive writes a webshell, yielding RCE.
+requires: []
+provides:
+  - auth-bypass
+  - arbitrary-file-write
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  Autodiscover requests with embedded backend paths; PowerShell mailbox-export to
+  web paths; webshells in Exchange directories.
+remediation: >
+  Patch Exchange, restrict autodiscover/PowerShell endpoints externally, monitor
+  New-MailboxExportRequest, segment the server.
+mitre: [T1190, T1505.003]
+references:
+  - title: Microsoft - Exchange Server security
+    url: https://www.microsoft.com/en-us/security/blog/2021/03/02/hafnium-targeting-exchange-servers/
+chains:
+  - to: webshell-rce
+    via: [arbitrary-file-write]
+    outcome: Export a mailbox containing a webshell to a web path, then execute it.
+    tier: expert
+    difficulty: hard
+    documented: true
+    references:
+      - https://www.microsoft.com/en-us/security/blog/2021/03/02/hafnium-targeting-exchange-servers/

@@ -1,0 +1,22 @@
+{
+  "name": "lolchain",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "description": "Living Off the Land for exploit chains - an interactive precondition/postcondition graph of vulnerability chains.",
+  "scripts": {
+    "data": "node scripts/build.mjs",
+    "validate": "node scripts/build.mjs --check",
+    "dev": "npm run data && astro dev",
+    "build": "npm run data && astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "4.16.18"
+  },
+  "devDependencies": {
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
+    "js-yaml": "4.1.0"
+  }
+}

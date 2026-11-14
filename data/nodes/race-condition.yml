@@ -1,0 +1,25 @@
+id: race-condition
+name: Race Condition / Limit Bypass
+slug: race-condition
+tier: advanced
+category: web
+aliases: [race-condition, toctou, limit-overrun]
+summary: >
+  Concurrent requests hit a check-then-act window (single-packet attack, TOCTOU),
+  bypassing per-action limits — redeeming a coupon twice, overdrawing a balance,
+  or multi-using a one-time token.
+requires: []
+provides:
+  - auth-bypass
+achieves: []
+detection: >
+  Bursts of near-simultaneous identical requests; negative balances or over-limit
+  redemptions; one-time tokens used more than once.
+remediation: >
+  Atomic operations / row locks, idempotency keys, enforce limits in a single
+  transaction, server-side rate and uniqueness checks.
+mitre: [T1190]
+references:
+  - title: PortSwigger - Race conditions
+    url: https://portswigger.net/web-security/race-conditions
+chains: []

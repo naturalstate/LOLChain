@@ -1,0 +1,38 @@
+id: sqli
+name: SQL Injection
+slug: sqli
+tier: basic
+category: web
+aliases: [sqli, sql-injection]
+summary: >
+  Attacker input alters a backend SQL query, allowing reads and writes to the
+  database and, on some engines, file access or code execution.
+requires:
+  - attacker-controlled-query
+provides:
+  - db-read
+  - db-write
+  - arbitrary-file-write
+achieves:
+  - data-breach
+detection: >
+  SQL errors in logs, UNION/boolean/time-based payloads in parameters, sudden
+  bulk reads from the database by the app service account.
+remediation: >
+  Parameterised queries / prepared statements, least-privilege DB accounts,
+  disable risky features (xp_cmdshell, FILE privilege, local-infile).
+mitre: [T1190]
+references:
+  - title: PortSwigger - SQL injection
+    url: https://portswigger.net/web-security/sql-injection
+chains:
+  - to: webshell-rce
+    via: [arbitrary-file-write]
+    outcome: >
+      Write a webshell to a web-served directory via INTO OUTFILE / COPY TO, then
+      execute it to gain command execution.
+    tier: basic
+    difficulty: hard
+    documented: true
+    references:
+      - https://portswigger.net/web-security/sql-injection

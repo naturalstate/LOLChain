@@ -1,0 +1,85 @@
+---
+import Base from '../layouts/Base.astro';
+import { buildGraph } from '../lib/graph.mjs';
+const { stats } = buildGraph();
+---
+<Base title="About" description="How LolChain models exploit chains.">
+  <div class="wrap">
+    <div class="crumb"><a href="/">LolChain</a> / ABOUT</div>
+    <section class="hero" style="padding:30px 0 10px">
+      <div class="label kicker">About</div>
+      <h1 style="font-size:clamp(28px,4.5vw,44px)">A graph of capability handoffs.</h1>
+    </section>
+
+    <article class="prose">
+      <p>
+        LolChain is a "Living Off the Land" reference — like GTFOBins or lolcreds — but
+        for <strong>vulnerability chains</strong> instead of single primitives. It
+        currently models <strong>{stats.nodeCount} vulns</strong>,
+        <strong>{stats.chainCount} curated chains</strong>, and
+        <strong>{stats.derivedCount} derived candidates</strong> across
+        {stats.categoryCount} categories.
+      </p>
+
+      <h2>The core idea</h2>
+      <p>
+        Every vuln is a handoff. Each node <strong>requires</strong> some capabilities
+        and <strong>provides</strong> others. An edge exists wherever one node's
+        <code>provides</code> satisfies another node's <code>requires</code>. That single
+        rule powers every query mode and lets new vulns slot in by capability tag, not
+        by hand-wired links.
+      </p>
+
+      <h3>Capabilities</h3>
+      <p>
+        The shared vocabulary — the "handoff currency" (e.g. <code>server-side-request</code>,
+        <code>os-command-exec</code>, <code>cloud-credentials</code>). Curated and small;
+        it is the glue of the graph.
+      </p>
+      <h3>Goals</h3>
+      <p>
+        A controlled vocabulary of end states (<code>account-takeover</code>,
+        <code>cloud-account-compromise</code>, <code>cluster-admin</code>…). A node
+        <code>achieves</code> a goal when reaching it realises that outcome. Goal-directed
+        search matches these.
+      </p>
+
+      <h2>Two kinds of edge</h2>
+      <ul>
+        <li><strong>Curated</strong> — human-authored handoffs with an outcome,
+          difficulty, and references. Shown first and marked <em>documented</em>.</li>
+        <li><strong>Derived</strong> — inferred by the build wherever capabilities line up
+          and no curated edge exists. Shown as <em>derived · unverified</em>: plausible,
+          not confirmed.</li>
+      </ul>
+
+      <h2>Query modes</h2>
+      <ul>
+        <li><strong>I have X</strong> — forward reachability: everything a foothold
+          unlocks, hop by hop.</li>
+        <li><strong>X → goal Z</strong> — ranked paths to a goal, optionally forced
+          through a chosen node.</li>
+        <li><strong>I want Z</strong> — backward search: what achieves the goal and what
+          each step needs.</li>
+      </ul>
+
+      <h2>Reading a node</h2>
+      <p>
+        Each node page shows its capability handoff (requires / provides / achieves),
+        the chains out of it (curated and derived), what reaches it, and a defense panel
+        with detection, remediation, and MITRE ATT&amp;CK mappings.
+      </p>
+
+      <h2>Contributing</h2>
+      <p>
+        Data is YAML in <code>data/nodes/</code>, validated against a JSON Schema. See
+        <a href="https://github.com/">the repository</a> and <code>CONTRIBUTING.md</code>
+        for the node shape and how to add one. Tiers: <strong>basic</strong>,
+        <strong>advanced</strong>, <strong>expert</strong>. Categories: web, cloud,
+        kubernetes, cicd, llm, mobile, network.
+      </p>
+
+      <p style="margin-top:28px"><a href="/scope/">→ Scope &amp; ethics</a></p>
+    </article>
+  </div>
+</Base>

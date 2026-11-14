@@ -1,0 +1,37 @@
+id: dead-xss-rce-delivery
+name: '"Dead" XSS as RCE Delivery'
+slug: dead-xss-rce-delivery
+tier: expert
+category: web
+aliases: [xss-delivery, chained-xss-rce]
+summary: >
+  A seemingly low-impact reflected XSS (HttpOnly cookies, no session value) is used
+  purely as a delivery vehicle: it drives an authenticated admin's browser to an
+  admin-only function that is itself vulnerable to RCE — critical impact without any
+  admin credentials.
+requires:
+  - js-exec-victim-browser
+provides:
+  - forge-state-change
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  Admin-only functions invoked via forged in-browser requests; admin actions
+  originating from reflected-XSS pages; server exec following admin-panel calls.
+remediation: >
+  Fix the XSS and the admin-only RCE independently, require re-auth/CSRF tokens on
+  admin functions, segment admin UIs, never treat "dead" XSS as low risk.
+mitre: [T1059.007, T1190]
+references:
+  - title: Securitycafe - Chained vulnerabilities
+    url: https://securitycafe.ro/2021/12/16/chained-vulnerabilities-in-web-applications/
+chains:
+  - to: webshell-rce
+    via: [os-command-exec]
+    outcome: >
+      The admin-only function yields command execution, delivered entirely through
+      the victim admin's browser.
+    tier: expert
+    difficulty: hard
+    documented: false

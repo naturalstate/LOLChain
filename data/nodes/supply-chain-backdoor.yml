@@ -1,0 +1,26 @@
+id: supply-chain-backdoor
+name: Backdoored Artifact Distribution
+slug: supply-chain-backdoor
+tier: expert
+category: cicd
+aliases: [supply-chain, backdoor, dependency-poisoning]
+summary: >
+  A tampered build artifact or dependency, signed with stolen keys, is published and
+  pulled by downstream consumers — compromising everyone who installs it.
+requires:
+  - supply-chain-write
+provides:
+  - lateral-movement
+achieves:
+  - supply-chain-compromise
+detection: >
+  Artifacts whose checksums/provenance don't match source; releases from unexpected
+  pipelines; dependencies with new maintainers or post-install scripts.
+remediation: >
+  SLSA provenance and verification, reproducible builds, signed artifacts with
+  independent key custody, pin and verify dependencies, review post-install hooks.
+mitre: [T1195.002]
+references:
+  - title: SLSA - Supply-chain Levels for Software Artifacts
+    url: https://slsa.dev/
+chains: []

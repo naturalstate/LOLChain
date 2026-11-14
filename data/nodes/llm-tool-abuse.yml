@@ -1,0 +1,35 @@
+id: llm-tool-abuse
+name: Agent Tool Abuse
+slug: llm-tool-abuse
+tier: advanced
+category: llm
+aliases: [tool-abuse, excessive-agency, function-calling-abuse]
+summary: >
+  With control over an agent's tool calls, an attacker abuses an over-scoped tool:
+  SSRF via a retrieval fetcher, data exfiltration through the context window, or
+  unauthorized state changes via function calling.
+requires:
+  - llm-tool-access
+provides:
+  - server-side-request
+  - forge-state-change
+  - info-disclosure
+achieves: []
+detection: >
+  Fetcher tools requesting internal/metadata URLs; tool calls performing writes the
+  user never asked for; sensitive data appearing in tool arguments/outputs.
+remediation: >
+  Least-privilege, allowlisted tools; block internal/metadata targets in fetchers;
+  authorize each tool action against the real user; log and rate-limit tool use.
+mitre: [T1190]
+references:
+  - title: OWASP - LLM06 Excessive Agency
+    url: https://genai.owasp.org/llmrisk/llm06-excessive-agency/
+chains:
+  - to: cloud-imds-cred-theft
+    via: [server-side-request]
+    outcome: >
+      Abuse a retrieval/fetch tool as SSRF to hit the instance metadata service.
+    tier: advanced
+    difficulty: hard
+    documented: false

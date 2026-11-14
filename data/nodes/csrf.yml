@@ -1,0 +1,33 @@
+id: csrf
+name: Cross-Site Request Forgery
+slug: csrf
+tier: basic
+category: web
+aliases: [csrf, xsrf]
+summary: >
+  A victim's browser is tricked into sending an authenticated state-changing
+  request the attacker chose (email change, password reset, fund transfer).
+requires:
+  - victim-interaction
+provides:
+  - forge-state-change
+achieves:
+  - account-takeover
+detection: >
+  State-changing requests with off-site Referer/Origin; missing or reused CSRF
+  tokens; sensitive actions from cross-site navigations.
+remediation: >
+  SameSite=Lax/Strict cookies, per-request anti-CSRF tokens, re-auth for sensitive
+  actions, check Origin/Referer on state-changing endpoints.
+mitre: [T1189]
+references:
+  - title: PortSwigger - CSRF
+    url: https://portswigger.net/web-security/csrf
+chains:
+  - to: session-hijack
+    via: [forge-state-change]
+    outcome: >
+      Chain a forged email-change or password-reset into full account takeover.
+    tier: basic
+    difficulty: medium
+    documented: false

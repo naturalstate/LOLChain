@@ -1,0 +1,36 @@
+# Goals — the controlled vocabulary of end states (decision: controlled, not free text).
+#
+# A node declares `achieves: [<goal-slug>]` when reaching it realises that end state.
+# Goal-directed search ("I want Z") matches against these slugs, so keep them stable.
+
+goals:
+  - slug: account-takeover
+    label: Account takeover (ATO)
+    description: Full control of a victim user or admin account.
+  - slug: remote-code-execution
+    label: Remote code execution
+    description: Arbitrary code/command execution on a server or host.
+  - slug: cloud-account-compromise
+    label: Cloud account compromise
+    description: Control of cloud identity/credentials and the resources they unlock.
+  - slug: data-breach
+    label: Data breach
+    description: Bulk read of sensitive application or customer data.
+  - slug: privilege-escalation
+    label: Privilege escalation
+    description: Gain higher privileges than originally granted.
+  - slug: auth-bypass
+    label: Authentication bypass
+    description: Access protected functionality without valid credentials.
+  - slug: internal-network-access
+    label: Internal network access
+    description: Reach and interact with internal-only services.
+  - slug: cluster-admin
+    label: Kubernetes cluster admin
+    description: Full control of a Kubernetes cluster.
+  - slug: domain-admin
+    label: Domain admin
+    description: Full control of an Active Directory domain.
+  - slug: supply-chain-compromise
+    label: Supply-chain compromise
+    description: Tamper with artifacts/pipelines consumed by downstream users.

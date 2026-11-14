@@ -1,0 +1,35 @@
+id: cloud-iam-privesc
+name: Cloud IAM Privilege Escalation
+slug: cloud-iam-privesc
+tier: advanced
+category: cloud
+aliases: [iam-privesc, passrole, aws-privesc]
+summary: >
+  With initial cloud credentials, enumerate identity and exploit a permissive policy
+  (iam:PassRole + lambda:CreateFunction, policy-version edits, role chaining) to reach
+  an administrative role.
+requires:
+  - cloud-credentials
+provides:
+  - priv-esc
+  - lateral-movement
+achieves:
+  - cloud-account-compromise
+detection: >
+  sts:GetCallerIdentity then broad IAM enumeration; CreatePolicyVersion /
+  AttachRolePolicy / PassRole from a non-admin identity; new Lambda/EC2 assuming
+  privileged roles.
+remediation: >
+  Least-privilege IAM, deny dangerous actions (iam:PassRole scoping,
+  CreatePolicyVersion), permission boundaries, alert on privilege-granting API calls.
+mitre: [T1078.004, T1098]
+references:
+  - title: Rhino Security - AWS IAM Privilege Escalation
+    url: https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
+chains:
+  - to: cloud-data-access
+    via: [priv-esc]
+    outcome: Use the escalated role to read protected data stores at will.
+    tier: advanced
+    difficulty: medium
+    documented: false

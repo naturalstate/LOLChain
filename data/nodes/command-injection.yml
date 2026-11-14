@@ -1,0 +1,26 @@
+id: command-injection
+name: OS Command Injection
+slug: command-injection
+tier: basic
+category: web
+aliases: [command-injection, os-injection, rce]
+summary: >
+  Attacker input is passed to an OS shell, letting the attacker run arbitrary
+  commands on the host — typically escalated to a reverse shell.
+requires:
+  - attacker-controlled-command
+provides:
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  Shell metacharacters (; | & $() ``) in parameters; web user spawning shells or
+  network tools (curl, nc, bash -i); unexpected outbound connections.
+remediation: >
+  Avoid shelling out; use parameterised APIs, strict input allowlists, and
+  least-privilege service accounts without shell access.
+mitre: [T1059]
+references:
+  - title: PortSwigger - OS command injection
+    url: https://portswigger.net/web-security/os-command-injection
+chains: []

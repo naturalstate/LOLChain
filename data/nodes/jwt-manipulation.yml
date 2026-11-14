@@ -1,0 +1,33 @@
+id: jwt-manipulation
+name: JWT Manipulation
+slug: jwt-manipulation
+tier: advanced
+category: web
+aliases: [jwt, jwt-attack, alg-none]
+summary: >
+  Weaknesses in JWT verification (alg:none, RS256->HS256 confusion, weak-secret
+  crack, kid injection) let an attacker forge tokens and claims to bypass auth or
+  escalate privileges.
+requires: []
+provides:
+  - auth-bypass
+  - priv-esc
+achieves:
+  - privilege-escalation
+detection: >
+  Tokens with alg:none or switched algorithms; signature-verification failures;
+  admin/role claims changed; many signature-brute-force attempts.
+remediation: >
+  Pin expected algorithm, verify signatures with the right key type, reject
+  alg:none, use strong secrets/keys, validate iss/aud/exp.
+mitre: [T1550]
+references:
+  - title: PortSwigger - JWT attacks
+    url: https://portswigger.net/web-security/jwt
+chains:
+  - to: session-hijack
+    via: [auth-bypass]
+    outcome: Forge a token for another user or an admin to take over the account.
+    tier: advanced
+    difficulty: medium
+    documented: false

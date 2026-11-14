@@ -1,0 +1,36 @@
+id: k8s-sa-abuse
+name: Service-Account RBAC Abuse
+slug: k8s-sa-abuse
+tier: expert
+category: kubernetes
+aliases: [rbac-abuse, sa-abuse]
+summary: >
+  An over-permissioned service account is used against the API server to create or
+  exec pods, read secrets, or bind roles — expanding control across the namespace
+  or cluster.
+requires:
+  - service-account-token
+provides:
+  - cluster-api-access
+  - priv-esc
+achieves: []
+detection: >
+  create/exec pod, get secrets, or RBAC bind operations by a workload SA; use of
+  verbs outside the SA's normal pattern; SelfSubjectAccessReview probing.
+remediation: >
+  Least-privilege RBAC, deny pods/exec and secret reads to workloads, admission
+  policies (OPA/Kyverno), audit high-risk verbs.
+mitre: [T1098.001]
+references:
+  - title: Kubernetes - RBAC authorization
+    url: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+chains:
+  - to: k8s-privileged-pod-escape
+    via: [cluster-api-access]
+    outcome: >
+      Create a privileged / hostPath pod via the API to break out onto the node.
+    tier: expert
+    difficulty: hard
+    documented: true
+    references:
+      - https://kubernetes.io/docs/concepts/security/pod-security-standards/

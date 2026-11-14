@@ -1,0 +1,36 @@
+id: xss-stored
+name: Stored XSS
+slug: xss-stored
+tier: basic
+category: web
+aliases: [stored-xss, persistent-xss]
+summary: >
+  Attacker script is persisted by the application and served to other users,
+  running JavaScript in each victim's browser without a crafted link.
+requires:
+  - victim-interaction
+provides:
+  - js-exec-victim-browser
+  - read-session-token
+  - forge-state-change
+achieves:
+  - account-takeover
+detection: >
+  Script-like content in stored fields; CSP violation reports across many users;
+  mass identical outbound beacons from victim browsers.
+remediation: >
+  Output-encode on render, strict CSP, sanitise stored rich text server-side,
+  HttpOnly + SameSite cookies to limit token theft.
+mitre: [T1059.007]
+references:
+  - title: PortSwigger - Stored XSS
+    url: https://portswigger.net/web-security/cross-site-scripting/stored
+chains:
+  - to: session-hijack
+    via: [read-session-token]
+    outcome: Steal tokens or act in-session for every user who views the payload.
+    tier: basic
+    difficulty: medium
+    documented: true
+    references:
+      - https://portswigger.net/web-security/cross-site-scripting/exploiting

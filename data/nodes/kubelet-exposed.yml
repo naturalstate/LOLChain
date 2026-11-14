@@ -1,0 +1,32 @@
+id: kubelet-exposed
+name: Exposed Kubelet API
+slug: kubelet-exposed
+tier: advanced
+category: kubernetes
+aliases: [kubelet, "10250"]
+summary: >
+  An unauthenticated or weakly-protected kubelet API (:10250) allows listing pods
+  and running exec in them, yielding command execution inside containers.
+requires: []
+provides:
+  - os-command-exec
+achieves: []
+detection: >
+  Access to :10250/:10255 from unexpected sources; /run and /exec kubelet endpoints
+  invoked; anonymous API calls succeeding.
+remediation: >
+  Require kubelet authn/authz (Webhook), disable anonymous auth, network-restrict
+  the kubelet port, enable NodeRestriction.
+mitre: [T1610]
+references:
+  - title: Kubernetes - Kubelet authn/authz
+    url: https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/
+chains:
+  - to: k8s-pod-rce
+    via: [os-command-exec]
+    outcome: exec into a running pod via the kubelet to gain in-cluster execution.
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/

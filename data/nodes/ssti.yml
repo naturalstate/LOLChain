@@ -1,0 +1,27 @@
+id: ssti
+name: Server-Side Template Injection
+slug: ssti
+tier: advanced
+category: web
+aliases: [ssti]
+summary: >
+  Attacker input is evaluated by a server-side template engine (Jinja2, Freemarker,
+  Velocity, Twig); a sandbox escape turns template evaluation into code execution.
+requires:
+  - attacker-controlled-template
+provides:
+  - os-command-exec
+  - arbitrary-file-read
+achieves:
+  - remote-code-execution
+detection: >
+  Template syntax ({{7*7}}, ${...}, #{...}) reflected and evaluated; access to
+  engine internals (__class__, Runtime) in payloads.
+remediation: >
+  Never build templates from user input, use logic-less templates, sandbox the
+  engine, pass user data as bound variables only.
+mitre: [T1190]
+references:
+  - title: PortSwigger - Server-side template injection
+    url: https://portswigger.net/web-security/server-side-template-injection
+chains: []

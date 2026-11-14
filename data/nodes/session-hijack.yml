@@ -1,0 +1,27 @@
+id: session-hijack
+name: Session Hijack / Account Takeover
+slug: session-hijack
+tier: basic
+category: web
+aliases: [ato, session-hijacking, account-takeover]
+summary: >
+  Acting inside a victim's authenticated session — via a stolen token or in-session
+  forgery — to fully control their account.
+requires:
+  - read-session-token
+provides:
+  - forge-state-change
+  - auth-bypass
+achieves:
+  - account-takeover
+detection: >
+  Same session token seen from multiple IPs/user-agents; sensitive actions
+  (email/password change) without re-authentication; impossible-travel logins.
+remediation: >
+  HttpOnly + Secure + SameSite cookies, short sessions, re-auth or step-up for
+  sensitive actions, bind sessions to device/context, rotate tokens on privilege change.
+mitre: [T1539]
+references:
+  - title: PortSwigger - Exploiting XSS to hijack sessions
+    url: https://portswigger.net/web-security/cross-site-scripting/exploiting
+chains: []

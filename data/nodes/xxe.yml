@@ -1,0 +1,36 @@
+id: xxe
+name: XML External Entity Injection
+slug: xxe
+tier: advanced
+category: web
+aliases: [xxe]
+summary: >
+  An XML parser resolves attacker-defined external entities, enabling file read
+  and server-side requests from the parser's context.
+requires:
+  - attacker-controlled-xml
+provides:
+  - arbitrary-file-read
+  - server-side-request
+  - info-disclosure
+achieves:
+  - internal-network-access
+detection: >
+  <!DOCTYPE/<!ENTITY in request bodies; XML parsing followed by outbound requests
+  or reads of local files; SYSTEM/PUBLIC identifiers in payloads.
+remediation: >
+  Disable DOCTYPE/external entities in all XML parsers (secure processing), prefer
+  non-XML formats, patch legacy parsers.
+mitre: [T1190]
+references:
+  - title: PortSwigger - XXE injection
+    url: https://portswigger.net/web-security/xxe
+chains:
+  - to: cloud-imds-cred-theft
+    via: [server-side-request]
+    outcome: Use XXE-driven SSRF to reach the instance metadata service.
+    tier: advanced
+    difficulty: hard
+    documented: true
+    references:
+      - https://portswigger.net/web-security/xxe

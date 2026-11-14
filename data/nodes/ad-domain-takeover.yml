@@ -1,0 +1,26 @@
+id: ad-domain-takeover
+name: Active Directory Domain Takeover
+slug: ad-domain-takeover
+tier: expert
+category: network
+aliases: [domain-admin, ad-takeover, da]
+summary: >
+  Harvested domain credentials are escalated through AD misconfigurations
+  (Kerberoasting, delegation, ACL abuse, DCSync) to full control of the domain.
+requires:
+  - domain-credentials
+provides:
+  - lateral-movement
+achieves:
+  - domain-admin
+detection: >
+  Kerberoast/AS-REP requests, DCSync replication from non-DCs, abnormal ACL changes,
+  golden/silver-ticket indicators, new privileged group members.
+remediation: >
+  Tiered admin model, strong service-account passwords/gMSA, least-privilege ACLs,
+  monitor replication and privileged-group changes, LAPS.
+mitre: [T1003.006, T1558, T1484]
+references:
+  - title: Microsoft - Securing privileged access
+    url: https://learn.microsoft.com/en-us/security/privileged-access-workstations/overview
+chains: []

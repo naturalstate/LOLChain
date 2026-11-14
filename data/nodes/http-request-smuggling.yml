@@ -1,0 +1,37 @@
+id: http-request-smuggling
+name: HTTP Request Smuggling
+slug: http-request-smuggling
+tier: advanced
+category: web
+aliases: [request-smuggling, desync, hrs]
+summary: >
+  Front-end and back-end servers disagree on request boundaries (CL.TE, TE.CL,
+  CL.CL), letting an attacker prepend requests to other users' connections —
+  bypassing controls and poisoning shared responses.
+requires:
+  - desync-primitive
+provides:
+  - auth-bypass
+  - cache-control
+  - read-session-token
+achieves:
+  - auth-bypass
+detection: >
+  Ambiguous Content-Length/Transfer-Encoding handling; delayed responses on timing
+  probes; responses served to the wrong client.
+remediation: >
+  Normalise/​reject ambiguous length headers, use HTTP/2 end-to-end, disable
+  connection reuse to the back-end, keep front/back parsing identical.
+mitre: [T1190]
+references:
+  - title: PortSwigger - HTTP request smuggling
+    url: https://portswigger.net/web-security/request-smuggling
+chains:
+  - to: session-hijack
+    via: [read-session-token]
+    outcome: Capture other users' requests (including session cookies) via desync.
+    tier: advanced
+    difficulty: hard
+    documented: true
+    references:
+      - https://portswigger.net/web-security/request-smuggling

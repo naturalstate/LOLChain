@@ -1,0 +1,36 @@
+id: cicd-ppe
+name: Poisoned Pipeline Execution
+slug: cicd-ppe
+tier: advanced
+category: cicd
+aliases: [ppe, pipeline-poisoning, pull_request_target]
+summary: >
+  An attacker who can influence pipeline definitions or build scripts (editable
+  .gitlab-ci.yml/Makefile via PR, GitHub Actions pull_request_target) runs code on
+  the runner with pipeline privileges and secrets.
+requires:
+  - ci-pipeline-write
+provides:
+  - ci-runner-exec
+  - ci-secrets
+achieves: []
+detection: >
+  Pipeline-definition changes from forks/untrusted contributors; runner jobs making
+  unexpected network calls; secret access in PR-triggered runs; pull_request_target
+  with checkout of PR head.
+remediation: >
+  Never run untrusted PR code with secrets, require approval for fork pipelines,
+  least-privilege runner tokens, isolate/ephemeral runners, pin and review workflows.
+mitre: [T1195, T1072]
+references:
+  - title: GitHub - Security hardening for Actions
+    url: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions
+chains:
+  - to: cicd-secret-exfil
+    via: [ci-secrets]
+    outcome: Exfiltrate pipeline secrets (cloud creds, signing/registry keys).
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions

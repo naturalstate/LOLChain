@@ -1,0 +1,31 @@
+id: deeplink-oauth-theft
+name: Deep-Link OAuth Redirect Theft
+slug: deeplink-oauth-theft
+tier: advanced
+category: mobile
+aliases: [deeplink, mobile-oauth, redirect-hijack]
+summary: >
+  A flawed custom-scheme deep link or unvalidated redirect in a mobile OAuth flow
+  lets a malicious app intercept the authorization code or token.
+requires:
+  - victim-interaction
+provides:
+  - token-leak
+achieves: []
+detection: >
+  Multiple apps registering the same custom scheme; auth codes delivered to
+  unexpected handlers; redirect_uri values to non-app endpoints.
+remediation: >
+  Use PKCE and claimed HTTPS app links (not custom schemes), verify redirect_uri,
+  app-to-app attestation, short single-use codes.
+mitre: [T1550.001]
+references:
+  - title: OWASP MASVS
+    url: https://mas.owasp.org/MASVS/
+chains:
+  - to: oauth-token-theft
+    via: [token-leak]
+    outcome: Replay the intercepted code/token to take over the victim's account.
+    tier: advanced
+    difficulty: medium
+    documented: false

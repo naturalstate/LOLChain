@@ -1,0 +1,37 @@
+id: ssrf
+name: Server-Side Request Forgery
+slug: ssrf
+tier: basic
+category: web
+aliases: [ssrf]
+summary: >
+  Coerce the server into making attacker-controlled requests to hosts it can
+  reach but the attacker cannot.
+requires:
+  - server-processes-attacker-url
+provides:
+  - server-side-request
+  - internal-network-reach
+achieves:
+  - internal-network-access
+detection: >
+  Outbound requests to unexpected hosts; requests to link-local 169.254.169.254;
+  egress to internal RFC1918 ranges from application service accounts.
+remediation: >
+  Allowlist egress, block link-local and metadata ranges, enforce IMDSv2 with a
+  hop limit of 1, resolve and re-validate redirects server-side.
+mitre: [T1190]
+references:
+  - title: PentesterLab - Exploit Chain
+    url: https://pentesterlab.com/glossary/exploit-chain
+  - title: PortSwigger - SSRF
+    url: https://portswigger.net/web-security/ssrf
+chains:
+  - to: cloud-imds-cred-theft
+    via: [server-side-request]
+    outcome: Pull temporary cloud credentials from the instance metadata service.
+    tier: basic
+    difficulty: medium
+    documented: true
+    references:
+      - https://portswigger.net/web-security/ssrf

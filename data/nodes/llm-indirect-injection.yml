@@ -1,0 +1,35 @@
+id: llm-indirect-injection
+name: Indirect Prompt Injection
+slug: llm-indirect-injection
+tier: advanced
+category: llm
+aliases: [indirect-injection, rag-poisoning]
+summary: >
+  Malicious instructions are planted in content the model ingests (a web page, doc,
+  or email via RAG/retrieval). When the agent reads it, the payload hijacks its
+  tools — the SSRF-equivalent of this domain.
+requires:
+  - ingested-content
+provides:
+  - llm-tool-access
+achieves: []
+detection: >
+  Retrieved documents containing instruction-like text; tool calls triggered right
+  after ingesting external content; exfil to URLs embedded in sources.
+remediation: >
+  Isolate and label untrusted content, strip/escape instructions from retrieved
+  data, constrain tools, require confirmation for actions on ingested content.
+mitre: []
+references:
+  - title: OWASP - LLM01 Prompt Injection
+    url: https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+chains:
+  - to: llm-tool-abuse
+    via: [llm-tool-access]
+    outcome: >
+      A poisoned document steers the agent into invoking connected tools.
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://genai.owasp.org/llmrisk/llm01-prompt-injection/

@@ -1,0 +1,159 @@
+---
+import Base from '../layouts/Base.astro';
+import { buildGraph } from '../lib/graph.mjs';
+
+const { nodes, capabilities, stats } = buildGraph();
+
+// Facet counts (static totals computed at build time).
+const tiers = ['basic', 'advanced', 'expert'];
+const tierCounts = Object.fromEntries(tiers.map((t) => [t, nodes.filter((n) => n.tier === t).length]));
+const categories = [...new Set(nodes.map((n) => n.category))].sort();
+const catCounts = Object.fromEntries(categories.map((c) => [c, nodes.filter((n) => n.category === c).length]));
+const capLabel = Object.fromEntries(capabilities.map((c) => [c.slug, c.label]));
+const capCounts = {};
+for (const n of nodes) for (const p of n.provides) capCounts[p] = (capCounts[p] ?? 0) + 1;
+const capsByUse = Object.keys(capCounts).sort((a, b) => capCounts[b] - capCounts[a]);
+
+const sorted = [...nodes].sort((a, b) => a.name.localeCompare(b.name));
+const chainCountFor = (n) => n.chains.length;
+---
+<Base>
+  <div class="wrap">
+    <section class="hero">
+      <div class="label kicker">Exploit-chain reference</div>
+      <h1>Living Off the Land,<br />for vulnerability chains.</h1>
+      <p>
+        Every vuln is a handoff: it <em>requires</em> capabilities and <em>provides</em>
+        others. Chains exist wherever one node's output satisfies the next node's input.
+        Tell it what you have; see what it chains into.
+      </p>
+      <p style="margin-top:18px">
+        <a class="btn primary" href="/query/" style="text-decoration:none">→ I have X, what can I chain into?</a>
+      </p>
+    </section>
+
+    <div class="toolbar">
+      <div class="search">
+        <span class="label">Search catalog</span>
+        <input id="q" type="text" placeholder="> ssrf, token, rce, cloud…" autocomplete="off" />
+      </div>
+      <div class="stats">
+        <span id="shown">{nodes.length}</span> shown
+        <span class="dot">·</span><b>{stats.nodeCount}</b> vulns
+        <span class="dot">·</span><b>{stats.chainCount}</b> chains
+        <span class="dot">·</span><b>{stats.documentedCount}</b> documented
+        <span class="dot">·</span><b>{stats.categoryCount}</b> categories
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="facets">
+        <div class="facets-head">
+          <span class="label">Filters</span>
+          <button class="clear" id="clear">Clear</button>
+        </div>
+
+        <div class="facet-group">
+          <div class="head"><span class="label">Tier</span></div>
+          {tiers.map((t) => (
+            <div class="facet" data-type="tier" data-value={t}>
+              <span>{t}</span><span class="count">{tierCounts[t]}</span>
+            </div>
+          ))}
+        </div>
+
+        <div class="facet-group">
+          <div class="head"><span class="label">Category</span></div>
+          {categories.map((c) => (
+            <div class="facet" data-type="category" data-value={c}>
+              <span>{c}</span><span class="count">{catCounts[c]}</span>
+            </div>
+          ))}
+        </div>
+
+        <div class="facet-group">
+          <div class="head"><span class="label">Provides</span></div>
+          {capsByUse.map((slug) => (
+            <div class="facet" data-type="cap" data-value={slug}>
+              <span>{capLabel[slug] ?? slug}</span><span class="count">{capCounts[slug]}</span>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      <section class="table">
+        <div class="thead">
+          <span>Vuln</span><span>Tier</span><span>Category</span><span>Provides</span><span>Chains</span>
+        </div>
+        <div id="rows">
+          {sorted.map((n) => (
+            <a
+              class="row"
+              href={`/node/${n.slug}/`}
+              data-tier={n.tier}
+              data-category={n.category}
+              data-caps={n.provides.join(' ')}
+              data-search={`${n.name} ${n.slug} ${(n.aliases ?? []).join(' ')} ${n.summary} ${n.provides.join(' ')} ${n.requires.join(' ')}`.toLowerCase()}
+            >
+              <span>
+                <span class="nname">{n.name}</span>
+                <span class="nsum">{n.summary}</span>
+              </span>
+              <span><span class={`chip tier-${n.tier}`}>{n.tier}</span></span>
+              <span class="cat">{n.category}</span>
+              <span class="cap-cell">
+                {n.provides.slice(0, 3).map((p) => (
+                  <span class="chip provides">{capLabel[p] ?? p}</span>
+                ))}
+                {n.provides.length > 3 && <span class="chip">+{n.provides.length - 3}</span>}
+              </span>
+              <span class="count-pill"><b>{chainCountFor(n)}</b> chain{chainCountFor(n) === 1 ? '' : 's'}</span>
+            </a>
+          ))}
+        </div>
+        <div class="empty" id="empty" hidden>No vulns match these filters.</div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const active = { tier: new Set(), category: new Set(), cap: new Set() };
+    const rows = [...document.querySelectorAll('#rows .row')];
+    const q = document.getElementById('q');
+    const shown = document.getElementById('shown');
+    const empty = document.getElementById('empty');
+
+    function apply() {
+      const text = (q.value || '').trim().toLowerCase();
+      let count = 0;
+      for (const row of rows) {
+        const okTier = !active.tier.size || active.tier.has(row.dataset.tier);
+        const okCat = !active.category.size || active.category.has(row.dataset.category);
+        const caps = row.dataset.caps.split(' ');
+        const okCap = !active.cap.size || [...active.cap].every((c) => caps.includes(c));
+        const okText = !text || row.dataset.search.includes(text);
+        const visible = okTier && okCat && okCap && okText;
+        row.style.display = visible ? '' : 'none';
+        if (visible) count++;
+      }
+      shown.textContent = String(count);
+      empty.hidden = count !== 0;
+    }
+
+    document.querySelectorAll('.facet').forEach((el) => {
+      el.addEventListener('click', () => {
+        const set = active[el.dataset.type];
+        if (set.has(el.dataset.value)) { set.delete(el.dataset.value); el.classList.remove('active'); }
+        else { set.add(el.dataset.value); el.classList.add('active'); }
+        apply();
+      });
+    });
+    q.addEventListener('input', apply);
+    document.getElementById('clear').addEventListener('click', () => {
+      active.tier.clear(); active.category.clear(); active.cap.clear();
+      document.querySelectorAll('.facet.active').forEach((e) => e.classList.remove('active'));
+      q.value = '';
+      apply();
+    });
+  </script>
+</Base>

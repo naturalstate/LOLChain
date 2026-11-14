@@ -1,0 +1,30 @@
+id: mobile-hardcoded-key
+name: Hardcoded Key in Mobile Binary
+slug: mobile-hardcoded-key
+tier: basic
+category: mobile
+aliases: [hardcoded-secret, api-key-in-binary]
+summary: >
+  A secret or API key compiled into a mobile app binary is extracted by reversing or
+  intercepting traffic, granting direct access to the backend API.
+requires: []
+provides:
+  - api-credentials
+achieves: []
+detection: >
+  High-entropy strings in binaries; the same key used from many devices/IPs; API
+  calls bypassing the app's normal client flow.
+remediation: >
+  Keep secrets server-side, use per-user tokens with short lifetimes, attestation,
+  certificate pinning, rotate leaked keys and scope them minimally.
+mitre: [T1552.001]
+references:
+  - title: OWASP MASVS
+    url: https://mas.owasp.org/MASVS/
+chains:
+  - to: api-bola
+    via: [api-credentials]
+    outcome: Authenticate to the backend API with the extracted key.
+    tier: basic
+    difficulty: easy
+    documented: false

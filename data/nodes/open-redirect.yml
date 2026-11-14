@@ -1,0 +1,35 @@
+id: open-redirect
+name: Open Redirect
+slug: open-redirect
+tier: basic
+category: web
+aliases: [open-redirect, unvalidated-redirect]
+summary: >
+  The application redirects to an attacker-controlled URL. On SSO/OAuth flows this
+  leaks authorization codes or tokens to the attacker's host.
+requires:
+  - victim-interaction
+provides:
+  - token-leak
+achieves: []
+detection: >
+  redirect/return/next parameters pointing off-site; OAuth redirect_uri values to
+  unexpected hosts; referrer leakage of code/token parameters.
+remediation: >
+  Allowlist redirect targets, never reflect user-supplied URLs, exact-match OAuth
+  redirect_uri, strip credentials from referrers.
+mitre: [T1190]
+references:
+  - title: PortSwigger - OAuth / redirect_uri
+    url: https://portswigger.net/web-security/oauth
+chains:
+  - to: oauth-token-theft
+    via: [token-leak]
+    outcome: >
+      Leak the OAuth authorization code / access token via the redirect to take
+      over the victim's account on any SSO-backed app.
+    tier: basic
+    difficulty: medium
+    documented: true
+    references:
+      - https://portswigger.net/web-security/oauth

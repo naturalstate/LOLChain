@@ -1,0 +1,60 @@
+---
+import '../styles/global.css';
+const { title, description } = Astro.props;
+const fullTitle = title ? `${title} — LolChain` : 'LolChain — Living Off the Land for exploit chains';
+const desc = description ?? 'An interactive precondition/postcondition graph of vulnerability chains. Tell it what you have; see what it chains into.';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    <meta name="color-scheme" content="dark" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/">
+          <span class="mark">[&gt;_]</span>
+          <span>
+            <span class="name">LolChain</span>
+            <span class="tagline">— exploit chains, by capability handoff</span>
+          </span>
+        </a>
+        <nav class="nav">
+          <a href="/">browse</a>
+          <a href="/query/">query</a>
+          <a href="/about/">about</a>
+          <a href="https://github.com/" target="_blank" rel="noopener">source</a>
+          <a href="/scope/">scope</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="notice">
+          <strong>Authorized use only.</strong> LolChain is a conceptual reference for
+          pentesters, red teams, and defenders. Entries describe capability handoffs,
+          detection, and remediation — not turnkey exploit code. Use only against systems
+          you are authorized to test.
+        </div>
+        <div>
+          <a href="/about/">about</a> · <a href="/scope/">scope &amp; ethics</a> · built like the LoL-site family
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

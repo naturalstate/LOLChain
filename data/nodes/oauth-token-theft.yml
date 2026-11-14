@@ -1,0 +1,26 @@
+id: oauth-token-theft
+name: OAuth Token Theft to ATO
+slug: oauth-token-theft
+tier: advanced
+category: web
+aliases: [oauth-ato, token-theft]
+summary: >
+  A leaked OAuth authorization code or access token is replayed to authenticate as
+  the victim across every application federated to that identity provider.
+requires:
+  - token-leak
+provides:
+  - auth-bypass
+achieves:
+  - account-takeover
+detection: >
+  Authorization codes redeemed from an unexpected IP/host; access tokens used from
+  new devices; code/token reuse.
+remediation: >
+  PKCE, exact redirect_uri matching, short-lived single-use codes, bind tokens to
+  client/device, sender-constrained tokens.
+mitre: [T1550.001]
+references:
+  - title: PortSwigger - OAuth authentication
+    url: https://portswigger.net/web-security/oauth
+chains: []

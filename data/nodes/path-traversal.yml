@@ -1,0 +1,26 @@
+id: path-traversal
+name: Path Traversal
+slug: path-traversal
+tier: basic
+category: web
+aliases: [path-traversal, directory-traversal, lfi-read]
+summary: >
+  Attacker-controlled path escapes the intended directory (../) to read files
+  outside it — config, keys, and secrets that seed the next stage.
+requires:
+  - attacker-controlled-include
+provides:
+  - arbitrary-file-read
+  - info-disclosure
+achieves: []
+detection: >
+  ../ or encoded traversal sequences in path parameters; reads of /etc/passwd,
+  web.config, .env, or key material by the web user.
+remediation: >
+  Canonicalise and validate paths against an allowlist, avoid passing user input
+  to filesystem APIs, run with least-privilege file permissions.
+mitre: [T1083]
+references:
+  - title: PortSwigger - Directory traversal
+    url: https://portswigger.net/web-security/file-path-traversal
+chains: []

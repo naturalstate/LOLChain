@@ -1,0 +1,27 @@
+id: webshell-rce
+name: Webshell Execution
+slug: webshell-rce
+tier: basic
+category: web
+aliases: [webshell, web-shell]
+summary: >
+  A convergence point for many chains: once an attacker can write a server-executable
+  file into a web-served path, requesting it yields OS command execution.
+requires:
+  - arbitrary-file-write
+provides:
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  New executable files in web roots; web requests to recently-created scripts;
+  server process spawning shells (sh, cmd, powershell) from the web user.
+remediation: >
+  Store uploads outside the web root, disable execution in writable dirs, enforce
+  content-type/extension allowlists, run the web user with least privilege and
+  read-only code directories.
+mitre: [T1505.003]
+references:
+  - title: PayloadsAllTheThings - Upload Insecure Files
+    url: https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Upload%20Insecure%20Files
+chains: []

@@ -1,0 +1,190 @@
+# Capabilities — the "handoff currency" of the chain graph.
+#
+# Every capability is a stable slug. Nodes reference these in `requires` / `provides`.
+# An edge A -> B exists wherever A.provides intersects B.requires.
+# Keep this list CURATED and SMALL; it is the glue of the whole graph.
+#
+# Groups are cosmetic (for the facet UI); the slug is the only identity.
+
+groups:
+  - id: entry
+    label: Entry conditions
+    description: Preconditions an attacker needs before a node is reachable.
+  - id: access
+    label: Access & execution
+    description: Footholds and execution primitives.
+  - id: data
+    label: Data & secrets
+    description: Reading/writing data, leaking secrets and tokens.
+  - id: movement
+    label: Reach & movement
+    description: Network reach, lateral movement, privilege changes.
+
+capabilities:
+  # --- Entry conditions (things the environment must already allow) ---
+  - slug: server-processes-attacker-url
+    group: entry
+    label: Server fetches attacker URL
+    description: The server will issue a request to a URL the attacker influences.
+  - slug: attacker-controlled-query
+    group: entry
+    label: Attacker-controlled query
+    description: Attacker input reaches a database query unsanitised.
+  - slug: attacker-controlled-include
+    group: entry
+    label: Attacker-controlled include/path
+    description: Attacker input reaches a file include or filesystem path.
+  - slug: attacker-controlled-template
+    group: entry
+    label: Attacker-controlled template
+    description: Attacker input is evaluated by a server-side template engine.
+  - slug: attacker-controlled-deserialization
+    group: entry
+    label: Attacker-controlled deserialization
+    description: Attacker bytes are deserialized by the application.
+  - slug: attacker-controlled-xml
+    group: entry
+    label: Attacker-controlled XML
+    description: Attacker XML is parsed with external entities enabled.
+  - slug: attacker-controlled-upload
+    group: entry
+    label: Attacker-controlled upload
+    description: Attacker can upload a file the server stores.
+  - slug: attacker-controlled-command
+    group: entry
+    label: Attacker-controlled command
+    description: Attacker input reaches an OS command / shell.
+  - slug: victim-interaction
+    group: entry
+    label: Victim interaction
+    description: Needs an authenticated victim to visit or click.
+  - slug: reflected-origin
+    group: entry
+    label: Reflected CORS origin
+    description: Server reflects the request Origin with credentials allowed.
+  - slug: unkeyed-cache-input
+    group: entry
+    label: Unkeyed cache input
+    description: Input that influences a response but is not part of the cache key.
+  - slug: desync-primitive
+    group: entry
+    label: Request-desync primitive
+    description: Front/back-end disagree on request boundaries (CL.TE/TE.CL).
+  - slug: ingested-content
+    group: entry
+    label: Attacker-controlled ingested content
+    description: A doc/page/email an LLM or pipeline will read is attacker-controlled.
+  - slug: ci-pipeline-write
+    group: entry
+    label: Pipeline-definition write
+    description: Attacker can edit CI config/build scripts (PR, fork, protected target).
+
+  # --- Access & execution ---
+  - slug: js-exec-victim-browser
+    group: access
+    label: JS in victim browser
+    description: Run JavaScript in the victim's browser context.
+  - slug: os-command-exec
+    group: access
+    label: OS command execution
+    description: Execute OS commands / code on the host or container.
+  - slug: arbitrary-file-write
+    group: access
+    label: Arbitrary file write
+    description: Write arbitrary files on the server.
+  - slug: service-account-token
+    group: access
+    label: Service-account token
+    description: Hold a workload identity token (k8s SA, instance role file, etc.).
+  - slug: llm-tool-access
+    group: access
+    label: LLM tool/plugin access
+    description: Drive an LLM's connected tools, plugins, or function calls.
+  - slug: ci-runner-exec
+    group: access
+    label: CI runner execution
+    description: Run code on a build runner with pipeline context.
+  - slug: supply-chain-write
+    group: access
+    label: Supply-chain write
+    description: Tamper with an artifact/pipeline consumed downstream.
+
+  # --- Data & secrets ---
+  - slug: arbitrary-file-read
+    group: data
+    label: Arbitrary file read
+    description: Read arbitrary files on the server.
+  - slug: db-read
+    group: data
+    label: Database read
+    description: Read the backend database.
+  - slug: db-write
+    group: data
+    label: Database write
+    description: Write the backend database.
+  - slug: read-session-token
+    group: data
+    label: Read session token
+    description: Obtain a session cookie/token or act in-session.
+  - slug: info-disclosure
+    group: data
+    label: Info disclosure
+    description: Leak internal info (paths, hostnames, versions, secrets).
+  - slug: token-leak
+    group: data
+    label: Token leak
+    description: Leak OAuth code / JWT / API token.
+  - slug: cloud-credentials
+    group: data
+    label: Cloud credentials
+    description: Obtain cloud/API credentials.
+  - slug: api-credentials
+    group: data
+    label: API credentials
+    description: Obtain backend/API keys or tokens (e.g. hardcoded in a client).
+  - slug: ci-secrets
+    group: data
+    label: CI/CD secrets
+    description: Obtain pipeline secrets (signing keys, cloud creds, registry tokens).
+
+  # --- Reach & movement ---
+  - slug: server-side-request
+    group: movement
+    label: Server-side request
+    description: Make the server issue a request you control (SSRF reachability).
+  - slug: internal-network-reach
+    group: movement
+    label: Internal network reach
+    description: Reach internal-only hosts/services.
+  - slug: forge-state-change
+    group: movement
+    label: Forge state change
+    description: Make an authenticated state-changing request as the victim.
+  - slug: auth-bypass
+    group: movement
+    label: Auth bypass
+    description: Bypass an authentication or access-control check.
+  - slug: priv-esc
+    group: movement
+    label: Privilege escalation
+    description: Escalate privileges (user->admin, pod->node, role->role).
+  - slug: lateral-movement
+    group: movement
+    label: Lateral movement
+    description: Move to another host / account / service.
+  - slug: cache-control
+    group: movement
+    label: Shared cache control
+    description: Influence a shared/cacheable response.
+  - slug: cluster-api-access
+    group: movement
+    label: Cluster API access
+    description: Authenticated access to the Kubernetes API server.
+  - slug: node-root
+    group: movement
+    label: Node / host root
+    description: Root on the underlying node or host (escaped the container).
+  - slug: domain-credentials
+    group: movement
+    label: Domain credentials
+    description: Active Directory credentials usable for further movement.

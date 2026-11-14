@@ -1,0 +1,34 @@
+id: k8s-pod-rce
+name: Pod RCE to Service-Account Token
+slug: k8s-pod-rce
+tier: advanced
+category: kubernetes
+aliases: [pod-rce, sa-token-theft]
+summary: >
+  Code execution inside a Kubernetes pod exposes the mounted service-account token
+  at /var/run/secrets/kubernetes.io/serviceaccount/token, usable against the API
+  server.
+requires:
+  - os-command-exec
+provides:
+  - service-account-token
+achieves: []
+detection: >
+  Reads of the serviceaccount token path; API-server calls from pod IPs using the
+  default SA; unexpected kubectl-like traffic to the API server.
+remediation: >
+  Set automountServiceAccountToken: false where unused, scope SA RBAC to minimum,
+  use short-lived projected tokens, restrict egress to the API server.
+mitre: [T1552.001]
+references:
+  - title: Kubernetes - Service account tokens
+    url: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+chains:
+  - to: k8s-sa-abuse
+    via: [service-account-token]
+    outcome: Authenticate to the API server with the pod's service-account token.
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/

@@ -1,0 +1,32 @@
+id: llm-prompt-injection
+name: Direct Prompt Injection
+slug: llm-prompt-injection
+tier: basic
+category: llm
+aliases: [prompt-injection, jailbreak]
+summary: >
+  Attacker input overrides the model's instructions, making an LLM-backed app ignore
+  its guardrails and invoke connected tools or plugins on the attacker's behalf.
+requires: []
+provides:
+  - llm-tool-access
+achieves: []
+detection: >
+  Inputs containing instruction-override phrasing; tool calls inconsistent with user
+  intent; outputs leaking system prompts; anomalous tool-use sequences.
+remediation: >
+  Treat model output as untrusted, enforce tool authorization outside the model,
+  least-privilege tools, human approval for sensitive actions, input/output filters.
+mitre: []
+references:
+  - title: OWASP - LLM01 Prompt Injection
+    url: https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+chains:
+  - to: llm-tool-abuse
+    via: [llm-tool-access]
+    outcome: Drive a connected tool/plugin to act with the agent's privileges.
+    tier: basic
+    difficulty: medium
+    documented: true
+    references:
+      - https://genai.owasp.org/llmrisk/llm01-prompt-injection/

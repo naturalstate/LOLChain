@@ -1,0 +1,29 @@
+id: browser-full-chain
+name: Browser Full Exploit Chain
+slug: browser-full-chain
+tier: expert
+category: network
+aliases: [pwn2own-chain, renderer-to-kernel]
+summary: >
+  The Pwn2Own archetype: a renderer RCE is chained through a sandbox escape and a
+  kernel local privilege escalation to code execution as the most privileged user,
+  then persistence.
+requires:
+  - victim-interaction
+provides:
+  - os-command-exec
+  - priv-esc
+  - lateral-movement
+achieves:
+  - remote-code-execution
+detection: >
+  Browser processes spawning unexpected children; sandbox-broker anomalies; kernel
+  exploit telemetry; persistence mechanisms installed after a web visit.
+remediation: >
+  Keep browsers/OS patched, enable site isolation and exploit mitigations (CET,
+  sandboxing), least-privilege users, EDR on process lineage.
+mitre: [T1203, T1068]
+references:
+  - title: Chromium - Security architecture
+    url: https://www.chromium.org/Home/chromium-security/
+chains: []

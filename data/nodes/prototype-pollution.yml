@@ -1,0 +1,28 @@
+id: prototype-pollution
+name: Prototype Pollution
+slug: prototype-pollution
+tier: advanced
+category: web
+aliases: [prototype-pollution, proto]
+summary: >
+  Attacker sets properties on Object.prototype (via __proto__/constructor), so an
+  injected property reaches a trusted sink — yielding RCE server-side or XSS
+  client-side.
+requires:
+  - attacker-controlled-query
+provides:
+  - os-command-exec
+  - js-exec-victim-browser
+achieves:
+  - remote-code-execution
+detection: >
+  __proto__ / constructor / prototype keys in JSON or query input; unexpected
+  global property values; gadget sinks (child_process options, template configs).
+remediation: >
+  Object.freeze(Object.prototype), null-prototype objects, validate/allowlist keys,
+  use Map instead of plain objects for user data.
+mitre: [T1190]
+references:
+  - title: PortSwigger - Prototype pollution
+    url: https://portswigger.net/web-security/prototype-pollution
+chains: []

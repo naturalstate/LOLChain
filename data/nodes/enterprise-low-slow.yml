@@ -1,0 +1,34 @@
+id: enterprise-low-slow
+name: Low-and-Slow Enterprise Chain
+slug: enterprise-low-slow
+tier: expert
+category: network
+aliases: [low-and-slow, enterprise-chain]
+summary: >
+  A chain of individually minor findings: a verbose error leaks internal hostnames,
+  which enables SSRF to a weak internal API, then lateral movement and harvested
+  domain credentials — ending at Domain Admin.
+requires:
+  - info-disclosure
+provides:
+  - internal-network-reach
+  - lateral-movement
+  - domain-credentials
+achieves: []
+detection: >
+  Recon of internal hostnames from error messages; app service accounts reaching
+  internal APIs; credential use spreading across hosts; unusual LDAP/Kerberos activity.
+remediation: >
+  Suppress verbose errors, segment internal services, authenticate internal APIs,
+  tier admin credentials, monitor lateral movement and credential reuse.
+mitre: [T1210, T1552, T1078]
+references:
+  - title: Securitycafe - Chained vulnerabilities
+    url: https://securitycafe.ro/2021/12/16/chained-vulnerabilities-in-web-applications/
+chains:
+  - to: ad-domain-takeover
+    via: [domain-credentials]
+    outcome: Use harvested credentials to escalate to Domain Admin.
+    tier: expert
+    difficulty: hard
+    documented: false

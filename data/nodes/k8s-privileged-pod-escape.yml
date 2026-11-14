@@ -1,0 +1,35 @@
+id: k8s-privileged-pod-escape
+name: Privileged Pod / Node Escape
+slug: k8s-privileged-pod-escape
+tier: expert
+category: kubernetes
+aliases: [container-escape, hostpath-escape, privileged-pod]
+summary: >
+  A privileged pod, hostPath mount, or host namespaces let an attacker break out of
+  the container and gain root on the underlying node.
+requires:
+  - cluster-api-access
+provides:
+  - node-root
+  - lateral-movement
+achieves:
+  - privilege-escalation
+detection: >
+  Pods created with privileged:true, hostPID/hostNetwork, or hostPath: /; chroot
+  into host filesystem; kubelet/node credentials read from a pod.
+remediation: >
+  Pod Security Admission (restricted), deny privileged/hostPath/host namespaces,
+  seccomp/AppArmor, runtime sandboxes (gVisor/Kata).
+mitre: [T1611]
+references:
+  - title: Kubernetes - Pod Security Standards
+    url: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+chains:
+  - to: k8s-node-to-cluster-admin
+    via: [node-root]
+    outcome: Use node identity / other pods' secrets to reach cluster admin.
+    tier: expert
+    difficulty: hard
+    documented: true
+    references:
+      - https://kubernetes.io/docs/concepts/security/pod-security-standards/

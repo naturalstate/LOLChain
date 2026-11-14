@@ -1,0 +1,27 @@
+id: cloud-data-access
+name: Cloud Data Store Access
+slug: cloud-data-access
+tier: basic
+category: cloud
+aliases: [s3-access, data-exfil, bucket-access]
+summary: >
+  Valid cloud credentials with storage/database permissions are used to list and
+  read object stores, databases, and snapshots — turning a foothold into a breach.
+requires:
+  - cloud-credentials
+provides:
+  - db-read
+  - info-disclosure
+achieves:
+  - data-breach
+detection: >
+  Mass S3/GetObject or RDS/snapshot access from new principals or IPs; large egress;
+  access to buckets a workload never normally touches (GuardDuty exfil findings).
+remediation: >
+  Scope data permissions tightly, block public access, encrypt with scoped KMS keys,
+  enable access logging and anomaly detection, VPC endpoints with policies.
+mitre: [T1530]
+references:
+  - title: AWS - S3 security best practices
+    url: https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html
+chains: []

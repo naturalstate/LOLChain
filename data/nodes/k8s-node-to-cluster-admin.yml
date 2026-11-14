@@ -1,0 +1,26 @@
+id: k8s-node-to-cluster-admin
+name: Node to Cluster Admin
+slug: k8s-node-to-cluster-admin
+tier: expert
+category: kubernetes
+aliases: [cluster-takeover, node-takeover]
+summary: >
+  Root on a node yields the kubelet credentials and every secret of the pods
+  scheduled there; harvesting a privileged token escalates to full cluster control.
+requires:
+  - node-root
+provides:
+  - lateral-movement
+achieves:
+  - cluster-admin
+detection: >
+  Node credentials used from unusual contexts; secrets of many namespaces read;
+  cluster-admin bindings created; new DaemonSets scheduling attacker pods.
+remediation: >
+  NodeRestriction admission, limit secret exposure per node, rotate node certs,
+  separate sensitive workloads onto dedicated node pools, monitor RBAC changes.
+mitre: [T1610, T1078]
+references:
+  - title: Kubernetes - Controlling access to the API
+    url: https://kubernetes.io/docs/concepts/security/controlling-access/
+chains: []

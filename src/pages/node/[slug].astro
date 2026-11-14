@@ -1,0 +1,162 @@
+---
+import Base from '../../layouts/Base.astro';
+import { buildGraph } from '../../lib/graph.mjs';
+
+export function getStaticPaths() {
+  const { nodes, edges, capabilities, goals } = buildGraph();
+  const capLabel = Object.fromEntries(capabilities.map((c) => [c.slug, c.label]));
+  const goalLabel = Object.fromEntries(goals.map((g) => [g.slug, g.label]));
+  const nodeName = Object.fromEntries(nodes.map((n) => [n.slug, n.name]));
+
+  return nodes.map((node) => ({
+    params: { slug: node.slug },
+    props: {
+      node,
+      capLabel,
+      goalLabel,
+      nodeName,
+      outgoing: edges.filter((e) => e.from === node.slug),
+      incoming: edges.filter((e) => e.to === node.slug),
+    },
+  }));
+}
+
+const { node, capLabel, goalLabel, nodeName, outgoing, incoming } = Astro.props;
+const cap = (s) => capLabel[s] ?? s;
+
+const curatedOut = outgoing.filter((e) => e.type === 'curated');
+const derivedOut = outgoing.filter((e) => e.type === 'derived');
+const curatedIn = incoming.filter((e) => e.type === 'curated');
+const srcHref = `https://github.com/`; // repo URL set when hosting is chosen
+---
+<Base title={node.name} description={node.summary}>
+  <div class="wrap">
+    <div class="crumb"><a href="/">LolChain</a> / {node.slug.toUpperCase()}</div>
+
+    <div class="node-head">
+      <div>
+        <h1>{node.name}</h1>
+        <div class="badges">
+          <span class={`chip tier-${node.tier}`}>{node.tier}</span>
+          <span class="chip">{node.category}</span>
+          <span class="chip">{curatedOut.length} documented chain{curatedOut.length === 1 ? '' : 's'}</span>
+          {node.mitre?.map((m) => <span class="chip cap">{m}</span>)}
+        </div>
+      </div>
+      <a class="viewsrc" href={`${srcHref}`} target="_blank" rel="noopener">⌁ {node.slug}.yml</a>
+    </div>
+
+    <div class="detail">
+      <aside class="side">
+        {curatedOut.length > 0 && (
+          <>
+            <h3>Chains from here</h3>
+            <div class="side-list">
+              {curatedOut.map((e) => (
+                <a class="side-item" href={`/node/${e.to}/`}>{nodeName[e.to] ?? e.to}</a>
+              ))}
+            </div>
+          </>
+        )}
+        {node.references?.length > 0 && (
+          <>
+            <h3>References</h3>
+            <div class="side-list">
+              {node.references.map((r) => (
+                <a class="side-item" href={r.url} target="_blank" rel="noopener">{r.title ?? r.url} ↗</a>
+              ))}
+            </div>
+          </>
+        )}
+      </aside>
+
+      <section>
+        <p style="font-size:16px;color:var(--text);max-width:68ch;">{node.summary}</p>
+
+        <div class="section-title">Capabilities</div>
+        <div class="card">
+          <div class="field">
+            <span class="k">Requires</span>
+            <span class="v cap-cell">
+              {node.requires.length
+                ? node.requires.map((r) => <span class="chip cap">{cap(r)}</span>)
+                : <span style="color:var(--text-dim)">entry point — no prior capability</span>}
+            </span>
+          </div>
+          <div class="field">
+            <span class="k">Provides</span>
+            <span class="v cap-cell">{node.provides.map((pv) => <span class="chip provides">{cap(pv)}</span>)}</span>
+          </div>
+          {node.achieves?.length > 0 && (
+            <div class="field">
+              <span class="k">Achieves</span>
+              <span class="v cap-cell">{node.achieves.map((g) => <span class="chip goal">{goalLabel[g] ?? g}</span>)}</span>
+            </div>
+          )}
+        </div>
+
+        {(curatedOut.length > 0 || derivedOut.length > 0) && (
+          <>
+            <div class="section-title">Chains from here</div>
+            {curatedOut.map((e) => (
+              <div class="card">
+                <h2><a href={`/node/${e.to}/`}>{nodeName[e.to] ?? e.to}</a></h2>
+                <div class="via">
+                  <span class="label" style="align-self:center">via</span>
+                  {e.via.map((v) => <span class="chip cap">{cap(v)}</span>)}
+                  {e.documented && <span class="chip doc">documented</span>}
+                  {e.difficulty && <span class="chip">{e.difficulty}</span>}
+                </div>
+                <p>{e.outcome}</p>
+                {e.references?.length > 0 && (
+                  <div class="field">
+                    <span class="k">References</span>
+                    <span class="v"><ul>{e.references.map((r) => <li><a href={r} target="_blank" rel="noopener">{r} ↗</a></li>)}</ul></span>
+                  </div>
+                )}
+              </div>
+            ))}
+            {derivedOut.map((e) => (
+              <div class="card derived">
+                <h2><a href={`/node/${e.to}/`}>{nodeName[e.to] ?? e.to}</a></h2>
+                <div class="via">
+                  <span class="label" style="align-self:center">via</span>
+                  {e.via.map((v) => <span class="chip cap">{cap(v)}</span>)}
+                  <span class="chip derived">derived · unverified</span>
+                </div>
+                <p style="color:var(--text-dim)">
+                  Plausible handoff: this node provides a capability the target requires.
+                  Not a documented chain — verify before relying on it.
+                </p>
+              </div>
+            ))}
+          </>
+        )}
+
+        {curatedIn.length > 0 && (
+          <>
+            <div class="section-title">Reaches this node</div>
+            <div class="card" style="border-left-color:var(--border-strong)">
+              <div class="via">
+                {curatedIn.map((e) => <a class="chip" href={`/node/${e.from}/`}>{nodeName[e.from] ?? e.from}</a>)}
+              </div>
+            </div>
+          </>
+        )}
+
+        <div class="section-title">Defense</div>
+        <div class="card" style="border-left-color:var(--accent-4)">
+          {node.detection && (
+            <div class="field"><span class="k">Detection</span><span class="v">{node.detection}</span></div>
+          )}
+          {node.remediation && (
+            <div class="field"><span class="k">Remediation</span><span class="v">{node.remediation}</span></div>
+          )}
+          {node.mitre?.length > 0 && (
+            <div class="field"><span class="k">MITRE ATT&CK</span><span class="v">{node.mitre.join(', ')}</span></div>
+          )}
+        </div>
+      </section>
+    </div>
+  </div>
+</Base>

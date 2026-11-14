@@ -1,0 +1,37 @@
+id: proxylogon
+name: ProxyLogon Pattern (Exchange)
+slug: proxylogon
+tier: expert
+category: network
+aliases: [proxylogon, cve-2021-26855]
+summary: >
+  A pre-auth SSRF in Exchange is chained to an authentication bypass, then
+  arbitrary file write, dropping a webshell for RCE as SYSTEM. Archetypal
+  low-severity-primitive to full-compromise chain.
+requires:
+  - server-side-request
+provides:
+  - auth-bypass
+  - arbitrary-file-write
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  Suspicious POSTs to /ecp and /autodiscover; webshells written to Exchange virtual
+  directories; w3wp.exe spawning cmd/powershell; unusual OAB/ECP activity.
+remediation: >
+  Patch Exchange promptly, restrict external access to admin endpoints, monitor
+  webshell drop paths, segment and least-privilege service accounts.
+mitre: [T1190, T1505.003]
+references:
+  - title: Microsoft - HAFNIUM / Exchange mitigations
+    url: https://www.microsoft.com/en-us/security/blog/2021/03/02/hafnium-targeting-exchange-servers/
+chains:
+  - to: webshell-rce
+    via: [arbitrary-file-write]
+    outcome: Write a webshell to an Exchange virtual directory and execute as SYSTEM.
+    tier: expert
+    difficulty: hard
+    documented: true
+    references:
+      - https://www.microsoft.com/en-us/security/blog/2021/03/02/hafnium-targeting-exchange-servers/

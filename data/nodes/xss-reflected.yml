@@ -1,0 +1,38 @@
+id: xss-reflected
+name: Reflected XSS
+slug: xss-reflected
+tier: basic
+category: web
+aliases: [xss, reflected-xss]
+summary: >
+  Attacker-controlled input is reflected into a page without encoding, running
+  JavaScript in the victim's browser context.
+requires:
+  - victim-interaction
+provides:
+  - js-exec-victim-browser
+  - read-session-token
+achieves:
+  - account-takeover
+detection: >
+  WAF reflections of script-like payloads; CSP violation reports; anomalous
+  requests carrying markup in parameters.
+remediation: >
+  Context-aware output encoding, a strict Content-Security-Policy, HttpOnly +
+  SameSite cookies so token theft degrades to in-session forgery only.
+mitre: [T1059.007]
+references:
+  - title: PortSwigger - Reflected XSS
+    url: https://portswigger.net/web-security/cross-site-scripting/reflected
+chains:
+  - to: session-hijack
+    via: [read-session-token]
+    outcome: >
+      Exfiltrate the session cookie/token (or act in-session) to take over the
+      victim's authenticated session. If HttpOnly blocks theft, pivot to
+      in-session state change.
+    tier: basic
+    difficulty: medium
+    documented: true
+    references:
+      - https://portswigger.net/web-security/cross-site-scripting/exploiting

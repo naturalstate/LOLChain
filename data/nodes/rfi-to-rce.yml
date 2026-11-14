@@ -1,0 +1,26 @@
+id: rfi-to-rce
+name: Remote File Inclusion to RCE
+slug: rfi-to-rce
+tier: basic
+category: web
+aliases: [rfi, remote-file-inclusion]
+summary: >
+  The application includes a remote, attacker-hosted file as code, executing it
+  on the server for direct command execution.
+requires:
+  - attacker-controlled-include
+provides:
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  Includes of http(s):// or ftp:// URLs in parameters; outbound fetches of script
+  files immediately followed by anomalous process execution.
+remediation: >
+  Disable allow_url_include/allow_url_fopen, never include user input, use fixed
+  template allowlists.
+mitre: [T1190]
+references:
+  - title: HackTricks - File Inclusion
+    url: https://book.hacktricks.xyz/pentesting-web/file-inclusion
+chains: []

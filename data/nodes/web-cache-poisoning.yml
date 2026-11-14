@@ -1,0 +1,33 @@
+id: web-cache-poisoning
+name: Web Cache Poisoning
+slug: web-cache-poisoning
+tier: advanced
+category: web
+aliases: [cache-poisoning]
+summary: >
+  An unkeyed input influences a cacheable response, so a poisoned response (XSS,
+  redirect, or malicious content) is served to every subsequent visitor.
+requires:
+  - unkeyed-cache-input
+provides:
+  - cache-control
+  - js-exec-victim-browser
+achieves: []
+detection: >
+  Reflected unkeyed headers (X-Forwarded-Host, etc.) in cached responses; cache
+  hits serving attacker content; anomalies in cache keys vs response content.
+remediation: >
+  Include all response-affecting inputs in the cache key, strip hop-by-hop headers,
+  avoid reflecting headers, scope caching tightly.
+mitre: [T1190]
+references:
+  - title: PortSwigger - Web cache poisoning
+    url: https://portswigger.net/web-security/web-cache-poisoning
+chains:
+  - to: session-hijack
+    via: [js-exec-victim-browser]
+    outcome: >
+      Poison a cached page with XSS to mass-compromise every visitor's session.
+    tier: advanced
+    difficulty: hard
+    documented: false

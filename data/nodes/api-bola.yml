@@ -1,0 +1,27 @@
+id: api-bola
+name: API Broken Object Level Authorization
+slug: api-bola
+tier: basic
+category: mobile
+aliases: [bola, api-idor, mass-assignment]
+summary: >
+  A backend API fails to scope objects to the caller, so an authenticated client can
+  iterate identifiers and read or modify every user's records — mass data exposure.
+requires:
+  - api-credentials
+provides:
+  - db-read
+  - info-disclosure
+achieves:
+  - data-breach
+detection: >
+  One token enumerating many object ids; access to records across tenants; high
+  request volume to object endpoints with changing ids.
+remediation: >
+  Enforce per-object authorization server-side, scope queries to the caller, rate-
+  limit, avoid trusting client-supplied ids/fields (mass-assignment guards).
+mitre: [T1190]
+references:
+  - title: OWASP API Security - BOLA
+    url: https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/
+chains: []

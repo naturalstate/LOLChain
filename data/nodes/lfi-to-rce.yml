@@ -1,0 +1,27 @@
+id: lfi-to-rce
+name: Local File Inclusion to RCE
+slug: lfi-to-rce
+tier: basic
+category: web
+aliases: [lfi, file-inclusion]
+summary: >
+  An attacker-controlled path is included/executed by the application. Combined
+  with a writable or poisonable file, it yields command execution.
+requires:
+  - attacker-controlled-include
+provides:
+  - arbitrary-file-read
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  Path-traversal sequences (../), includes of /proc/self/environ, access-log or
+  session files being included, PHP wrappers (php://, data://) in parameters.
+remediation: >
+  Never include user input; use allowlists of fixed templates, disable
+  allow_url_include, run with least-privilege filesystem permissions.
+mitre: [T1190, T1505.003]
+references:
+  - title: PayloadsAllTheThings - File Inclusion
+    url: https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/File%20Inclusion
+chains: []
