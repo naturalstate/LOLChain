@@ -1,0 +1,116 @@
+<svg width="1120" height="420" viewBox="0 0 1120 420" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f17"/>
+      <stop offset="55%" stop-color="#0a0e14"/>
+      <stop offset="100%" stop-color="#090c12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="16%" cy="10%" r="75%">
+      <stop offset="0%" stop-color="#1a2230" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0a0e14" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="92%" cy="88%" r="55%">
+      <stop offset="0%" stop-color="#2a1114" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#0a0e14" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <rect width="1120" height="420" rx="20" fill="url(#bg)"/>
+  <rect width="1120" height="420" rx="20" fill="url(#glow)"/>
+  <rect width="1120" height="420" rx="20" fill="url(#glow2)"/>
+  <rect x="1" y="1" width="1118" height="418" rx="19" fill="none" stroke="#1d2430" stroke-width="1.5"/>
+
+  <!-- ============ LEFT COLUMN ============ -->
+
+  <!-- mark + wordmark -->
+  <g font-family="'SFMono-Regular', ui-monospace, Consolas, monospace">
+    <rect x="56" y="70" width="52" height="44" rx="9" fill="#10161f" stroke="#2a3342" stroke-width="1.4"/>
+    <text x="82" y="99" text-anchor="middle" font-size="18" font-weight="700" fill="#e5484d">[&gt;_]</text>
+  </g>
+  <text x="124" y="108" font-size="62" font-weight="800" letter-spacing="-1.5">
+    <tspan fill="#e5484d">LOL</tspan><tspan fill="#e4e8f0">Chain</tspan>
+  </text>
+
+  <!-- tagline -->
+  <text x="58" y="168" font-size="26" font-weight="700" fill="#e4e8f0">Living Off the Land —</text>
+  <text x="58" y="200" font-size="26" font-weight="700" fill="#e4e8f0">for vulnerability chains.</text>
+
+  <!-- subtitle -->
+  <text x="58" y="232" font-size="15" fill="#8a93a6">Every vuln <tspan fill="#c7cdda">requires</tspan> capabilities and <tspan fill="#c7cdda">provides</tspan> others.</text>
+  <text x="58" y="254" font-size="15" fill="#8a93a6">A chain exists where one node's output feeds the next node's input.</text>
+
+  <!-- category pills -->
+  <g font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="12.5" font-weight="600">
+    <g><rect x="58"  y="280" width="52" height="30" rx="15" fill="#10161f" stroke="#4ea1d3" stroke-width="1.3"/><text x="84"  y="300" text-anchor="middle" fill="#7fc0e6">web</text></g>
+    <g><rect x="118" y="280" width="64" height="30" rx="15" fill="#10161f" stroke="#d9a441" stroke-width="1.3"/><text x="150" y="300" text-anchor="middle" fill="#e3c074">cloud</text></g>
+    <g><rect x="190" y="280" width="50" height="30" rx="15" fill="#10161f" stroke="#56b877" stroke-width="1.3"/><text x="215" y="300" text-anchor="middle" fill="#85cf9d">k8s</text></g>
+    <g><rect x="248" y="280" width="56" height="30" rx="15" fill="#10161f" stroke="#e5484d" stroke-width="1.3"/><text x="276" y="300" text-anchor="middle" fill="#ef8a8e">cicd</text></g>
+    <g><rect x="312" y="280" width="50" height="30" rx="15" fill="#10161f" stroke="#a06cd5" stroke-width="1.3"/><text x="337" y="300" text-anchor="middle" fill="#c3a3e6">llm</text></g>
+    <g><rect x="370" y="280" width="68" height="30" rx="15" fill="#10161f" stroke="#3fb6b2" stroke-width="1.3"/><text x="404" y="300" text-anchor="middle" fill="#79d2cf">mobile</text></g>
+    <g><rect x="446" y="280" width="78" height="30" rx="15" fill="#10161f" stroke="#8a93a6" stroke-width="1.3"/><text x="485" y="300" text-anchor="middle" fill="#aeb6c6">network</text></g>
+  </g>
+
+  <!-- stats -->
+  <text x="58" y="352" font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="15">
+    <tspan fill="#e4e8f0" font-weight="700">47</tspan><tspan fill="#5b6374"> vulns</tspan>
+    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">29</tspan><tspan fill="#5b6374"> chains</tspan>
+    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">29</tspan><tspan fill="#5b6374"> derived</tspan>
+    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">7</tspan><tspan fill="#5b6374"> categories</tspan>
+  </text>
+
+  <!-- ============ RIGHT COLUMN: chain path card ============ -->
+  <g filter="url(#soft)">
+    <rect x="600" y="44" width="462" height="332" rx="14" fill="#0f141c"/>
+    <rect x="600.75" y="44.75" width="460.5" height="330.5" rx="13.25" fill="none" stroke="#2a3342" stroke-width="1.5"/>
+  </g>
+
+  <text x="624" y="76" font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="12" letter-spacing="1" fill="#5b6374">GOAL PATH</text>
+  <text x="1038" y="76" text-anchor="end" font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="12" letter-spacing="0.5" fill="#6a7182">ssrf → cloud account</text>
+  <line x1="612" y1="90" x2="1050" y2="90" stroke="#1d2430" stroke-width="1.5"/>
+
+  <!-- path nodes -->
+  <g font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="13">
+    <!-- connectors -->
+    <line x1="654" y1="140" x2="654" y2="166" stroke="#333b49" stroke-width="1.5"/>
+    <line x1="654" y1="198" x2="654" y2="224" stroke="#333b49" stroke-width="1.5"/>
+    <line x1="654" y1="256" x2="654" y2="282" stroke="#333b49" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+    <!-- node 1 -->
+    <rect x="636" y="108" width="300" height="32" rx="8" fill="#141b26" stroke="#2a3342" stroke-width="1.2"/>
+    <circle cx="654" cy="124" r="5" fill="#4ea1d3"/>
+    <text x="670" y="129" fill="#e4e8f0" font-weight="600">Server-Side Request Forgery</text>
+    <text x="668" y="160" font-size="11" fill="#4ea1d3">server-side request</text>
+    <text x="928" y="160" font-size="10" text-anchor="end" fill="#56b877">documented</text>
+
+    <!-- node 2 -->
+    <rect x="636" y="166" width="300" height="32" rx="8" fill="#141b26" stroke="#2a3342" stroke-width="1.2"/>
+    <circle cx="654" cy="182" r="5" fill="#d9a441"/>
+    <text x="670" y="187" fill="#e4e8f0" font-weight="600">Cloud IMDS Credential Theft</text>
+    <text x="668" y="218" font-size="11" fill="#4ea1d3">cloud credentials</text>
+    <text x="928" y="218" font-size="10" text-anchor="end" fill="#5b6374">derived</text>
+
+    <!-- node 3 -->
+    <rect x="636" y="224" width="300" height="32" rx="8" fill="#141b26" stroke="#2a3342" stroke-width="1.2"/>
+    <circle cx="654" cy="240" r="5" fill="#d9a441"/>
+    <text x="670" y="245" fill="#e4e8f0" font-weight="600">Cloud IAM Privilege Escalation</text>
+    <text x="668" y="276" font-size="11" fill="#4ea1d3">priv-esc</text>
+
+    <!-- node 4 (goal) -->
+    <rect x="636" y="282" width="300" height="34" rx="8" fill="#241015" stroke="#e5484d" stroke-width="1.4"/>
+    <text x="654" y="303" font-size="13" fill="#e5484d">&#9873;</text>
+    <text x="672" y="303" fill="#ef8a8e" font-weight="700">Cloud account compromise</text>
+  </g>
+
+  <!-- legend -->
+  <g font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="10.5" fill="#5b6374">
+    <line x1="624" y1="340" x2="648" y2="340" stroke="#333b49" stroke-width="1.5"/>
+    <text x="654" y="344">curated</text>
+    <line x1="724" y1="340" x2="748" y2="340" stroke="#333b49" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <text x="754" y="344">derived</text>
+    <rect x="852" y="334" width="11" height="11" rx="3" fill="none" stroke="#e5484d" stroke-width="1.4"/>
+    <text x="869" y="344">goal</text>
+  </g>
+</svg>
