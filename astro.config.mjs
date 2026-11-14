@@ -1,8 +1,11 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 
-// Static site. `site`/`base` get set when a real domain/repo is chosen.
+// Static site, deployed to GitHub Pages at naturalstate.github.io/LOLChain/.
+// For a custom domain or user/org page later, set base back to '/'.
 export default defineConfig({
+  site: 'https://naturalstate.github.io',
+  base: '/LOLChain',
   output: 'static',
   trailingSlash: 'always',
   build: {

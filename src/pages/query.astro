@@ -115,6 +115,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     import { forwardReach } from '../lib/query.mjs';
     import { findPaths, findBackward, nodesAchieving } from '../lib/path.mjs';
 
+    const BASE = import.meta.env.BASE_URL;
     let graph = null, capLabel = {}, goalLabel = {}, nodeMeta = {};
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 
@@ -173,7 +174,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const steps = p.nodes.map((slug, i) => {
         const n = nodeMeta[slug];
         const isGoalEnd = i === p.nodes.length - 1 && (n.achieves ?? []).some((g) => goalSet.has(g));
-        let h = `<a class="step ${isGoalEnd ? 'goal' : ''}" href="/node/${slug}/">${esc(n.name)}</a>`;
+        let h = `<a class="step ${isGoalEnd ? 'goal' : ''}" href="${BASE}node/${slug}/">${esc(n.name)}</a>`;
         if (i < p.edges.length) {
           const e = p.edges[i];
           const via = e.via.map((v) => capLabel[v] ?? v).join(', ');
@@ -240,7 +241,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
           const tag = r.curated ? '<span class="chip doc">documented</span>' : '<span class="chip derived">derived · unverified</span>';
           const goals = (n.achieves ?? []).map((g) => `<span class="chip goal">${esc(goalLabel[g] ?? g)}</span>`).join('');
           const outcome = r.curated && r.outcome ? `<div class="rout">${esc(r.outcome)}</div>` : '';
-          html += `<a class="res ${r.curated ? '' : 'derived'}" href="/node/${r.slug}/"><div class="rhead"><span class="rname">${esc(n.name)}</span><span class="chip tier-${n.tier}">${n.tier}</span><span class="cat">${n.category}</span>${goals}</div><div class="rvia"><span class="label">via</span>${via}${tag}</div><div class="rfrom">${from}</div>${outcome}</a>`;
+          html += `<a class="res ${r.curated ? '' : 'derived'}" href="${BASE}node/${r.slug}/"><div class="rhead"><span class="rname">${esc(n.name)}</span><span class="chip tier-${n.tier}">${n.tier}</span><span class="cat">${n.category}</span>${goals}</div><div class="rvia"><span class="label">via</span>${via}${tag}</div><div class="rfrom">${from}</div>${outcome}</a>`;
         }
         html += '</div>';
       }
@@ -282,7 +283,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         const list = byGoalNode[gn] ?? [];
         html += `<div class="goal-node-head">achieved by <b>${esc(nodeMeta[gn].name)}</b></div>`;
         html += list.length ? list.map((p) => pathCard(p, goalSet)).join('')
-          : `<div class="pathcard"><div class="pathflow"><a class="step goal" href="/node/${gn}/">${esc(nodeMeta[gn].name)}</a></div></div>`;
+          : `<div class="pathcard"><div class="pathflow"><a class="step goal" href="${BASE}node/${gn}/">${esc(nodeMeta[gn].name)}</a></div></div>`;
       }
       results.innerHTML = html;
       drawGraph('b-graph', pathElements(res), undefined);
@@ -319,7 +320,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       document.getElementById('b-goal').addEventListener('change', (e) => { bState.goal = e.target.value; renderBackward(); });
     }
 
-    fetch('/graph.json').then((r) => r.json()).then((g) => {
+    fetch(`${BASE}graph.json`).then((r) => r.json()).then((g) => {
       graph = g;
       capLabel = Object.fromEntries(g.capabilities.map((c) => [c.slug, c.label]));
       goalLabel = Object.fromEntries(g.goals.map((x) => [x.slug, x.label]));

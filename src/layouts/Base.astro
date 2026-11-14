@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+const base = import.meta.env.BASE_URL;
 const { title, description } = Astro.props;
 const fullTitle = title ? `${title} — LolChain` : 'LolChain — Living Off the Land for exploit chains';
 const desc = description ?? 'An interactive precondition/postcondition graph of vulnerability chains. Tell it what you have; see what it chains into.';
@@ -12,6 +13,7 @@ const desc = description ?? 'An interactive precondition/postcondition graph of 
     <title>{fullTitle}</title>
     <meta name="description" content={desc} />
     <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230a0e14'/%3E%3Ctext x='8' y='12' font-family='monospace' font-size='9' fill='%23e5484d' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -22,7 +24,7 @@ const desc = description ?? 'An interactive precondition/postcondition graph of 
   <body>
     <header class="site-header">
       <div class="wrap">
-        <a class="brand" href="/">
+        <a class="brand" href={base}>
           <span class="mark">[&gt;_]</span>
           <span>
             <span class="name">LolChain</span>
@@ -30,11 +32,11 @@ const desc = description ?? 'An interactive precondition/postcondition graph of 
           </span>
         </a>
         <nav class="nav">
-          <a href="/">browse</a>
-          <a href="/query/">query</a>
-          <a href="/about/">about</a>
-          <a href="https://github.com/" target="_blank" rel="noopener">source</a>
-          <a href="/scope/">scope</a>
+          <a href={base}>browse</a>
+          <a href={`${base}query/`}>query</a>
+          <a href={`${base}about/`}>about</a>
+          <a href="https://github.com/naturalstate/LOLChain" target="_blank" rel="noopener">source</a>
+          <a href={`${base}scope/`}>scope</a>
         </nav>
       </div>
     </header>
@@ -52,7 +54,7 @@ const desc = description ?? 'An interactive precondition/postcondition graph of 
           you are authorized to test.
         </div>
         <div>
-          <a href="/about/">about</a> · <a href="/scope/">scope &amp; ethics</a> · built like the LoL-site family
+          <a href={`${base}about/`}>about</a> · <a href={`${base}scope/`}>scope &amp; ethics</a> · built like the LoL-site family
         </div>
       </div>
     </footer>

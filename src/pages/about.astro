@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { buildGraph } from '../lib/graph.mjs';
+const base = import.meta.env.BASE_URL;
 const { stats } = buildGraph();
 ---
 <Base title="About" description="How LolChain models exploit chains.">
@@ -73,13 +74,13 @@ const { stats } = buildGraph();
       <h2>Contributing</h2>
       <p>
         Data is YAML in <code>data/nodes/</code>, validated against a JSON Schema. See
-        <a href="https://github.com/">the repository</a> and <code>CONTRIBUTING.md</code>
+        <a href="https://github.com/naturalstate/LOLChain">the repository</a> and <code>CONTRIBUTING.md</code>
         for the node shape and how to add one. Tiers: <strong>basic</strong>,
         <strong>advanced</strong>, <strong>expert</strong>. Categories: web, cloud,
         kubernetes, cicd, llm, mobile, network.
       </p>
 
-      <p style="margin-top:28px"><a href="/scope/">→ Scope &amp; ethics</a></p>
+      <p style="margin-top:28px"><a href={`${base}scope/`}>→ Scope &amp; ethics</a></p>
     </article>
   </div>
 </Base>

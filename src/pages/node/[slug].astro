@@ -21,6 +21,7 @@ export function getStaticPaths() {
   }));
 }
 
+const base = import.meta.env.BASE_URL;
 const { node, capLabel, goalLabel, nodeName, outgoing, incoming } = Astro.props;
 const cap = (s) => capLabel[s] ?? s;
 
@@ -31,7 +32,7 @@ const srcHref = `https://github.com/`; // repo URL set when hosting is chosen
 ---
 <Base title={node.name} description={node.summary}>
   <div class="wrap">
-    <div class="crumb"><a href="/">LolChain</a> / {node.slug.toUpperCase()}</div>
+    <div class="crumb"><a href={base}>LolChain</a> / {node.slug.toUpperCase()}</div>
 
     <div class="node-head">
       <div>
@@ -53,7 +54,7 @@ const srcHref = `https://github.com/`; // repo URL set when hosting is chosen
             <h3>Chains from here</h3>
             <div class="side-list">
               {curatedOut.map((e) => (
-                <a class="side-item" href={`/node/${e.to}/`}>{nodeName[e.to] ?? e.to}</a>
+                <a class="side-item" href={`${base}node/${e.to}/`}>{nodeName[e.to] ?? e.to}</a>
               ))}
             </div>
           </>
@@ -100,7 +101,7 @@ const srcHref = `https://github.com/`; // repo URL set when hosting is chosen
             <div class="section-title">Chains from here</div>
             {curatedOut.map((e) => (
               <div class="card">
-                <h2><a href={`/node/${e.to}/`}>{nodeName[e.to] ?? e.to}</a></h2>
+                <h2><a href={`${base}node/${e.to}/`}>{nodeName[e.to] ?? e.to}</a></h2>
                 <div class="via">
                   <span class="label" style="align-self:center">via</span>
                   {e.via.map((v) => <span class="chip cap">{cap(v)}</span>)}
@@ -118,7 +119,7 @@ const srcHref = `https://github.com/`; // repo URL set when hosting is chosen
             ))}
             {derivedOut.map((e) => (
               <div class="card derived">
-                <h2><a href={`/node/${e.to}/`}>{nodeName[e.to] ?? e.to}</a></h2>
+                <h2><a href={`${base}node/${e.to}/`}>{nodeName[e.to] ?? e.to}</a></h2>
                 <div class="via">
                   <span class="label" style="align-self:center">via</span>
                   {e.via.map((v) => <span class="chip cap">{cap(v)}</span>)}
@@ -138,7 +139,7 @@ const srcHref = `https://github.com/`; // repo URL set when hosting is chosen
             <div class="section-title">Reaches this node</div>
             <div class="card" style="border-left-color:var(--border-strong)">
               <div class="via">
-                {curatedIn.map((e) => <a class="chip" href={`/node/${e.from}/`}>{nodeName[e.from] ?? e.from}</a>)}
+                {curatedIn.map((e) => <a class="chip" href={`${base}node/${e.from}/`}>{nodeName[e.from] ?? e.from}</a>)}
               </div>
             </div>
           </>
