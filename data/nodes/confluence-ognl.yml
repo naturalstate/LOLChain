@@ -1,0 +1,39 @@
+id: confluence-ognl
+name: Confluence OGNL Injection
+slug: confluence-ognl
+tier: expert
+category: network
+aliases: [confluence-ognl, cve-2022-26134, ognl-injection]
+summary: >
+  A single unauthenticated request with an OGNL expression in the URI is evaluated
+  server-side by Confluence, yielding OS command execution as the service user —
+  then in-memory implants (BEHINDER) and on-disk webshells for persistence.
+  (CVE-2022-26134, 2022; Volexity disclosure.)
+requires: []
+provides:
+  - os-command-exec
+  - arbitrary-file-write
+achieves:
+  - remote-code-execution
+detection: >
+  OGNL/${ patterns in Confluence access logs; the Confluence Java process spawning
+  shells; new .jsp files under Confluence web paths; in-memory classloader anomalies;
+  outbound from the app host after a single crafted GET.
+remediation: >
+  Patch Confluence; restrict management interfaces from the internet; EDR on the app
+  host; monitor web paths for new executable files; least-privilege the service account.
+mitre: [T1190, T1505.003]
+references:
+  - title: "Volexity — Zero-Day Exploitation of Atlassian Confluence"
+    url: https://www.volexity.com/blog/2022/06/02/zero-day-exploitation-of-atlassian-confluence/
+  - title: "NVD — CVE-2022-26134"
+    url: https://nvd.nist.gov/vuln/detail/CVE-2022-26134
+chains:
+  - to: webshell-rce
+    via: [arbitrary-file-write]
+    outcome: Drop a China Chopper / custom webshell to a Confluence web path for durable execution.
+    tier: expert
+    difficulty: medium
+    documented: true
+    references:
+      - https://www.volexity.com/blog/2022/06/02/zero-day-exploitation-of-atlassian-confluence/

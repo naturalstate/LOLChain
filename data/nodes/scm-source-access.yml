@@ -1,0 +1,44 @@
+id: scm-source-access
+name: Source-Code Repository Access
+slug: scm-source-access
+tier: advanced
+category: cicd
+aliases: [source-code-theft, scm-access, repo-access]
+summary: >
+  Access to the source-code system (GitHub/GitLab/Bitbucket) — via a stolen account,
+  token, or CI identity — yields the code itself plus the secrets, pipeline definitions
+  and infrastructure config inside it. Source is both sensitive data and a foothold for
+  supply-chain tampering. (Cloudflare 2023 downloaded 76 internal repos.)
+requires:
+  - lateral-movement
+provides:
+  - info-disclosure
+  - ci-secrets
+  - supply-chain-write
+achieves:
+  - data-breach
+detection: >
+  Bulk clone/`git archive` of many repos; repo access from new identities/IPs; reads of
+  CI config and IaC; secret-scanning hits used shortly after; pushes to protected
+  branches by unexpected actors.
+remediation: >
+  MFA + SSO on the SCM; scan repos for secrets and purge them; least-privilege repo
+  and CI tokens; branch protection and signed commits; alert on bulk clone and on
+  service accounts reading many repos.
+mitre: [T1213, T1552.001]
+references:
+  - title: "Cloudflare — Thanksgiving 2023 security incident"
+    url: https://blog.cloudflare.com/thanksgiving-2023-security-incident/
+chains:
+  - to: cicd-secret-exfil
+    via: [ci-secrets]
+    outcome: Pull pipeline secrets (cloud creds, signing/registry keys) found in the repos and CI config.
+    tier: advanced
+    difficulty: medium
+    documented: false
+  - to: supply-chain-backdoor
+    via: [supply-chain-write]
+    outcome: Commit a backdoor into source consumed by downstream builds and users.
+    tier: expert
+    difficulty: hard
+    documented: false

@@ -25,6 +25,8 @@ mitre: [T1190]
 references:
   - title: PortSwigger - SQL injection
     url: https://portswigger.net/web-security/sql-injection
+  - title: "MOVEit Transfer mass exploitation — SQLi → webshell (CISA AA23-158A)"
+    url: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-158a
 chains:
   - to: webshell-rce
     via: [arbitrary-file-write]

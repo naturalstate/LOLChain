@@ -1,0 +1,45 @@
+id: exposed-k8s-dashboard
+name: Exposed Kubernetes Dashboard
+slug: exposed-k8s-dashboard
+tier: advanced
+category: kubernetes
+aliases: [k8s-dashboard, open-dashboard, unauth-dashboard]
+summary: >
+  A Kubernetes dashboard or API console exposed to the internet with no authentication
+  grants control-plane and pod access. Pod environments and secrets frequently hold
+  cloud credentials, turning cluster access into cloud-account access. (Tesla 2018.)
+requires: []
+provides:
+  - cluster-api-access
+  - service-account-token
+  - cloud-credentials
+achieves: []
+detection: >
+  Dashboard/API server reachable from the internet; anonymous API calls succeeding;
+  pod exec and secret reads from unexpected sources; new workloads (e.g. miners)
+  scheduled by non-admin identities.
+remediation: >
+  Never expose the dashboard publicly; require authn/authz and RBAC; disable anonymous
+  auth; keep cloud credentials out of pod env (use IRSA / workload identity); network
+  policy on the control plane.
+mitre: [T1610, T1552.007]
+references:
+  - title: "Tesla Kubernetes cryptojacking + AWS exposure (Security Affairs / RedLock)"
+    url: https://securityaffairs.com/69413/data-breach/tesla-servers-hacked.html
+chains:
+  - to: k8s-sa-abuse
+    via: [service-account-token]
+    outcome: Use a pod's mounted service-account token to act against the API server.
+    tier: expert
+    difficulty: medium
+    documented: false
+  - to: cloud-data-access
+    via: [cloud-credentials]
+    outcome: >
+      Read cloud credentials from a pod's environment and reach the cloud data stores
+      behind them — the Tesla S3 telemetry exposure.
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://securityaffairs.com/69413/data-breach/tesla-servers-hacked.html

@@ -1,0 +1,40 @@
+id: privileged-creds-exposed
+name: Privileged Credentials Exposed Internally
+slug: privileged-creds-exposed
+tier: advanced
+category: network
+aliases: [hardcoded-admin-creds, pam-compromise, creds-on-share]
+summary: >
+  Once on the internal network, the attacker finds privileged credentials sitting in
+  the open — hardcoded in scripts on a share, in a wiki, or in a secrets/PAM vault —
+  and unlocks broad administrative access. (Uber 2022: PowerShell script on a share →
+  Thycotic PAM → AWS, Google Workspace, Slack, and more.)
+requires:
+  - internal-network-reach
+provides:
+  - priv-esc
+  - lateral-movement
+  - cloud-credentials
+achieves:
+  - privilege-escalation
+detection: >
+  Reads of script shares and wikis for the word "password"; PAM/vault logins from new
+  hosts; one identity suddenly checking out many secrets; admin credential use across
+  unrelated systems in a short window.
+remediation: >
+  No secrets in scripts/shares/wikis — scan and purge; gate the PAM with phishing-
+  resistant MFA and session recording; least-privilege and just-in-time access; alert
+  on bulk secret checkout; segment the internal network.
+mitre: [T1552.001, T1078.004, T1098]
+references:
+  - title: "Appsecco — analysis of the 2022 Uber hack"
+    url: https://appsecco.com/blog/the-big-uber-hack-what-can-we-learn-from-the-incident
+  - title: "Uber — 2022 security update"
+    url: https://www.uber.com/newsroom/security-update/
+chains:
+  - to: cloud-iam-privesc
+    via: [cloud-credentials]
+    outcome: Use vaulted cloud credentials to enumerate IAM and reach an administrative role.
+    tier: advanced
+    difficulty: medium
+    documented: false

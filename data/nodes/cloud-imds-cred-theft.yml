@@ -24,4 +24,24 @@ mitre: [T1552.005]
 references:
   - title: AWS - Use IMDSv2
     url: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
-chains: []
+  - title: "Capital One breach — SSRF → IMDS → S3 (Krebs on Security)"
+    url: https://krebsonsecurity.com/2019/08/what-we-can-learn-from-the-capital-one-hack/
+chains:
+  - to: cloud-data-access
+    via: [cloud-credentials]
+    outcome: >
+      Replay the instance-role credentials against object storage — the Capital One
+      breach read 100M+ records from 700+ S3 buckets this way.
+    tier: basic
+    difficulty: easy
+    documented: true
+    references:
+      - https://krebsonsecurity.com/2019/08/what-we-can-learn-from-the-capital-one-hack/
+  - to: cloud-iam-privesc
+    via: [cloud-credentials]
+    outcome: >
+      If the instance role is over-permissioned, enumerate IAM and escalate to an
+      administrative role.
+    tier: advanced
+    difficulty: medium
+    documented: false

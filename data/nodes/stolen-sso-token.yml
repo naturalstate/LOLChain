@@ -1,0 +1,41 @@
+id: stolen-sso-token
+name: Stolen SSO / Service Token Reuse
+slug: stolen-sso-token
+tier: advanced
+category: network
+aliases: [stolen-session-token, service-token-reuse, okta-token]
+summary: >
+  A valid SSO session, OAuth, or service-account token obtained elsewhere (a prior
+  SaaS breach, an unrotated credential, an info-stealer log) is replayed to
+  authenticate as the victim — no exploit needed. (Cloudflare 2023: an unrotated
+  Okta-leaked service token into the internal Atlassian estate.)
+requires: []
+provides:
+  - read-session-token
+  - lateral-movement
+  - internal-network-reach
+achieves:
+  - auth-bypass
+detection: >
+  Token use from new devices/IPs/ASNs; service tokens active after a supplier breach;
+  impossible-travel; long-lived tokens that were believed unused suddenly authenticating;
+  new accounts created by a service identity.
+remediation: >
+  Rotate ALL credentials after any IdP/supplier breach (not just those believed used);
+  short token lifetimes and binding; conditional access; monitor service-account auth;
+  revoke and re-issue on any exposure.
+mitre: [T1550.004, T1078.004]
+references:
+  - title: "Cloudflare — Thanksgiving 2023 security incident"
+    url: https://blog.cloudflare.com/thanksgiving-2023-security-incident/
+chains:
+  - to: scm-source-access
+    via: [lateral-movement]
+    outcome: >
+      Move from the stolen token to a privileged service account and on to the source-code
+      system (Cloudflare: Smartsheet admin on Jira, then Bitbucket).
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://blog.cloudflare.com/thanksgiving-2023-security-incident/

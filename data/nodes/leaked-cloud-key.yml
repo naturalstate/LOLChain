@@ -1,0 +1,48 @@
+id: leaked-cloud-key
+name: Leaked Long-Lived Cloud Key
+slug: leaked-cloud-key
+tier: basic
+category: cloud
+aliases: [hardcoded-aws-key, key-in-repo, key-in-env, static-credentials]
+summary: >
+  A long-lived cloud access key committed to source control, baked into a container
+  image or pod environment, or otherwise left at rest. Anyone who reads it holds
+  standing cloud credentials — no exploit required. (Uber 2016: an AWS key in a
+  private GitHub repo; Tesla 2018: AWS creds in a Kubernetes pod's environment.)
+requires: []
+provides:
+  - cloud-credentials
+achieves: []
+detection: >
+  Secret scanning hits in repos/images; use of long-lived access keys (vs. temporary
+  role creds); IAM key usage from new source IPs or outside normal automation;
+  CloudTrail for keys that should be unused.
+remediation: >
+  Never commit static keys — use short-lived role credentials / OIDC federation;
+  scan repos and images for secrets pre-merge and pre-push; rotate and scope keys to
+  least privilege; alert on long-lived-key usage.
+mitre: [T1552.001]
+references:
+  - title: "FTC / Uber 2016 AWS key-in-repo breach (The Register)"
+    url: https://www.theregister.com/2018/04/12/uber_aws_database_hack_ftc/
+  - title: "Tesla cloud breach — AWS creds in a Kubernetes pod (Security Affairs / RedLock)"
+    url: https://securityaffairs.com/69413/data-breach/tesla-servers-hacked.html
+chains:
+  - to: cloud-iam-privesc
+    via: [cloud-credentials]
+    outcome: >
+      Enumerate IAM with the leaked key and exploit a permissive policy to reach an
+      administrative role.
+    tier: advanced
+    difficulty: medium
+    documented: false
+  - to: cloud-data-access
+    via: [cloud-credentials]
+    outcome: >
+      Use the key directly against object storage / databases — the Uber (57M records)
+      and Tesla S3 exposures both ended here.
+    tier: basic
+    difficulty: easy
+    documented: true
+    references:
+      - https://www.theregister.com/2018/04/12/uber_aws_database_hack_ftc/

@@ -25,6 +25,10 @@ mitre: [T1195, T1072]
 references:
   - title: GitHub - Security hardening for Actions
     url: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions
+  - title: "GitHub Actions — secure use (pull_request_target / untrusted PR code)"
+    url: https://docs.github.com/en/actions/reference/security/secure-use
+  - title: "Travis CI secret leak — CVE-2021-41077"
+    url: https://nvd.nist.gov/vuln/detail/CVE-2021-41077
 chains:
   - to: cicd-secret-exfil
     via: [ci-secrets]

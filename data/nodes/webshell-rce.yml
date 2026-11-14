@@ -24,4 +24,14 @@ mitre: [T1505.003]
 references:
   - title: PayloadsAllTheThings - Upload Insecure Files
     url: https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Upload%20Insecure%20Files
-chains: []
+chains:
+  - to: config-secret-harvest
+    via: [os-command-exec]
+    outcome: >
+      Read cloud/storage credentials from config and environment — the MOVEit webshell
+      pulled Azure Blob keys this way to reach stored data.
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-158a

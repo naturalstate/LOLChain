@@ -4,7 +4,7 @@
 
 <p align="center">
   <b><a href="https://naturalstate.github.io/LOLChain/">🔗 Live site</a></b>
-  &nbsp;·&nbsp; 47 vulns &nbsp;·&nbsp; 29 curated chains &nbsp;·&nbsp; 29 derived candidates &nbsp;·&nbsp; 7 categories
+  &nbsp;·&nbsp; 56 vulns &nbsp;·&nbsp; 46 curated chains &nbsp;·&nbsp; 55 derived candidates &nbsp;·&nbsp; 7 categories
 </p>
 
 ---
@@ -144,6 +144,29 @@ Two small controlled vocabularies are the glue of the whole graph:
 Keeping these curated and small is what makes goal-directed search reliable and lets
 derived edges fall out automatically.
 
+## Grounded in real incidents
+
+Many chains are modelled directly on public breach post-mortems and vendor research —
+each node cites its sources (references are never invented):
+
+| Incident | Chain it encodes | Nodes |
+|---|---|---|
+| **Capital One** (2019) | WAF SSRF → EC2 IMDS role creds → S3 bulk read | `ssrf` → `cloud-imds-cred-theft` → `cloud-data-access` |
+| **Log4Shell** (CVE-2021-44228) | logged `${jndi:…}` → remote class load (RCE) / SSRF → IMDS | `log4shell` → `cloud-imds-cred-theft` |
+| **MOVEit** (Cl0p, CVE-2023-34362) | SQLi → `human2.aspx` webshell → Azure Blob keys → data theft | `sqli` → `webshell-rce` → `config-secret-harvest` |
+| **Confluence OGNL** (CVE-2022-26134) | unauth OGNL injection → RCE → webshell | `confluence-ognl` → `webshell-rce` |
+| **Tesla** (2018) | exposed k8s dashboard → AWS creds in pod env → S3 | `exposed-k8s-dashboard` → `cloud-data-access` |
+| **Uber** (2016) | AWS key in a private repo → S3 (57M records) | `leaked-cloud-key` → `cloud-data-access` |
+| **Uber** (2022, Lapsus$) | MFA fatigue → creds in a PowerShell script → PAM vault | `mfa-fatigue` → `privileged-creds-exposed` → `cloud-iam-privesc` |
+| **Cloudflare** (2023) | unrotated Okta service token → Atlassian → Bitbucket source | `stolen-sso-token` → `scm-source-access` |
+| **Codecov** (2021) | leaked distribution cred → trojaned uploader → downstream CI secrets | `cicd-secret-exfil` → `supply-chain-backdoor` |
+| **SolarWinds SUNBURST** (2020) | build-server implant → signed backdoored Orion → downstream | `supply-chain-backdoor` |
+| **GitHub Actions pwn request** / **Travis CI** (CVE-2021-41077) | untrusted PR code / forked build → pipeline secrets | `cicd-ppe` → `cicd-secret-exfil` |
+
+The recurring hinge across most of them: a "boring" foothold (SSRF, an exposed
+dashboard, a leaked key, a stolen token, code exec on a host) is converted into
+**standing or temporary cloud/service credentials**, which then unlock data or code.
+
 ## Site features
 
 - **Catalog** with a faceted filter rail (Tier · Category · Provides capability), live
@@ -213,7 +236,7 @@ docs/images/              # README graphics
 ## Status
 
 - [x] **Phase 0** — pipeline skeleton (schema, vocab, seed nodes, build, filterable UI).
-- [x] **Phase 1** — dataset (47 vulns, 29 curated chains, 7 categories).
+- [x] **Phase 1** — dataset (56 vulns, 46 curated chains, 7 categories).
 - [x] **Phase 2** — "I have X" forward query + facets + per-node pages.
 - [x] **Phase 3** — goal-directed + constrained + backward pathfinding; derived chains.
 - [x] **Phase 4** — interactive graph visualization (Cytoscape).

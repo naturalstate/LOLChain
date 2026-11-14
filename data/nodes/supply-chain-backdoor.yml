@@ -23,4 +23,8 @@ mitre: [T1195.002]
 references:
   - title: SLSA - Supply-chain Levels for Software Artifacts
     url: https://slsa.dev/
+  - title: "SolarWinds SUNSPOT build-server implant (CrowdStrike)"
+    url: https://www.crowdstrike.com/blog/sunspot-malware-technical-analysis/
+  - title: "Codecov Bash Uploader compromise — post-mortem (2021)"
+    url: https://about.codecov.io/apr-2021-post-mortem/
 chains: []

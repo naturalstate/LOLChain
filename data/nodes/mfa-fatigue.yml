@@ -1,0 +1,38 @@
+id: mfa-fatigue
+name: MFA Fatigue / Push Bombing
+slug: mfa-fatigue
+tier: advanced
+category: network
+aliases: [mfa-fatigue, push-bombing, mfa-bombing]
+summary: >
+  With a valid password (phished or bought from an info-stealer log), the attacker
+  spams push-approval prompts — often paired with a fake IT-support message — until the
+  victim approves one, yielding an authenticated session and internal reach.
+  (Uber 2022: a contractor's creds + repeated MFA prompts + social engineering.)
+requires:
+  - victim-interaction
+provides:
+  - read-session-token
+  - internal-network-reach
+achieves: []
+detection: >
+  Repeated denied MFA pushes then an approval; approvals from new geographies; a burst
+  of prompts in minutes; VPN login immediately after; help-desk contact out of band.
+remediation: >
+  Number-matching / phishing-resistant MFA (FIDO2); cap and rate-limit push prompts;
+  alert on push bombing; verify help-desk identity; block legacy auth.
+mitre: [T1621, T1078]
+references:
+  - title: "Uber — 2022 security update"
+    url: https://www.uber.com/newsroom/security-update/
+chains:
+  - to: privileged-creds-exposed
+    via: [internal-network-reach]
+    outcome: >
+      From inside the network, discover hardcoded privileged credentials (Uber: a
+      PowerShell script on a share holding PAM admin creds).
+    tier: advanced
+    difficulty: medium
+    documented: true
+    references:
+      - https://appsecco.com/blog/the-big-uber-hack-what-can-we-learn-from-the-incident

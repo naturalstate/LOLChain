@@ -1,0 +1,50 @@
+id: log4shell
+name: Log4Shell (JNDI Injection)
+slug: log4shell
+tier: expert
+category: web
+aliases: [log4shell, cve-2021-44228, jndi-injection, log4j]
+summary: >
+  A JNDI lookup string in any attacker-influenced value that Log4j logs
+  (${jndi:ldap://…}) makes the server fetch and instantiate a remote Java class —
+  unauthenticated RCE. The same outbound lookup doubles as blind SSRF/DNS exfil and,
+  from a cloud instance, a pivot to the metadata service. (CVE-2021-44228, 2021.)
+requires: []
+provides:
+  - server-side-request
+  - os-command-exec
+achieves:
+  - remote-code-execution
+detection: >
+  Outbound LDAP/RMI/DNS from app servers to new hosts; ${jndi:/${lower:/${env:…
+  patterns in logs, headers, URIs and form fields; JVM spawning shells; WAF hits for
+  jndi/ldap obfuscation.
+remediation: >
+  Patch Log4j (>=2.17.1); remove the JndiLookup class; block outbound egress from app
+  tiers; set log4j2.formatMsgNoLookups; enforce IMDSv2 so an SSRF pivot can't trivially
+  read role credentials.
+mitre: [T1190, T1059, T1552.005]
+references:
+  - title: "Rapid7 — Log4Shell (CVE-2021-44228) analysis"
+    url: https://www.rapid7.com/blog/post/ra-cve-2021-44228-log4shell-analysis/
+  - title: "NVD — CVE-2021-44228"
+    url: https://nvd.nist.gov/vuln/detail/CVE-2021-44228
+chains:
+  - to: cloud-imds-cred-theft
+    via: [server-side-request]
+    outcome: >
+      Drive the JNDI/outbound request at 169.254.169.254 to read the instance role's
+      temporary cloud credentials.
+    tier: expert
+    difficulty: medium
+    documented: true
+    references:
+      - https://www.rapid7.com/blog/post/ra-cve-2021-44228-log4shell-analysis/
+  - to: k8s-pod-rce
+    via: [os-command-exec]
+    outcome: >
+      In a containerized deployment, code execution exposes the mounted service-account
+      token for in-cluster movement.
+    tier: expert
+    difficulty: medium
+    documented: false
