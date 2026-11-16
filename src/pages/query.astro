@@ -8,7 +8,7 @@ const goalChoices = [...goals].sort((a, b) => a.label.localeCompare(b.label));
 const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter((c) => c.group === g.id) }));
 ---
 <Base title="Query" description="Tell LolChain what you have or want; see the chains between.">
-  <div class="wrap">
+  <div class="wrap" id="q-wrap">
     <section class="hero" style="padding-bottom:10px">
       <div class="label kicker">Query engine</div>
       <h1 style="font-size:clamp(28px,4.5vw,44px)">Trace the chains.</h1>
@@ -18,6 +18,14 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       <button class="tab active" data-tab="forward">I have X</button>
       <button class="tab" data-tab="goal">X → goal Z</button>
       <button class="tab" data-tab="backward">I want Z</button>
+    </div>
+
+    <div class="q-viewbar">
+      <div class="view-toggle" id="view-toggle">
+        <button type="button" data-view="standard" class="on">Standard</button>
+        <button type="button" data-view="expanded">Expanded</button>
+      </div>
+      <button type="button" class="vbtn" id="rail-toggle" title="Collapse the controls panel for a wider map">⟨ panel</button>
     </div>
 
     <div class="graph-legend">
@@ -160,6 +168,9 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       { selector: 'node[goal = 1]', style: { 'border-width': 3, 'border-color': '#e5484d' } },
       { selector: 'node[start = 1]', style: { 'shape': 'ellipse', 'border-width': 2, 'border-color': '#e4e8f0' } },
       { selector: 'node.focus', style: { 'border-width': 4, 'border-color': '#e4e8f0' } },
+      { selector: 'node.hl', style: { 'border-width': 3, 'border-color': '#e5484d' } },
+      { selector: 'edge.hl', style: { 'line-color': '#e5484d', 'target-arrow-color': '#e5484d', 'width': 2.5, 'line-style': 'solid' } },
+      { selector: '.dim', style: { 'opacity': 0.16 } },
       { selector: 'edge', style: {
         'width': 1.5, 'line-color': '#4a5162', 'target-arrow-color': '#4a5162',
         'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'arrow-scale': 0.9,
@@ -192,6 +203,48 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       cy.fit(undefined, 24);
     }
 
+    function resizeAllGraphs() {
+      Object.values(cyById).forEach((cy) => {
+        try { cy.resize(); if (cy.elements(':visible').length) cy.fit(undefined, 24); } catch (e) {}
+      });
+    }
+    function toggleFullscreen(wrap) {
+      if (!wrap) return;
+      if (document.fullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen)?.call(document); }
+      else { (wrap.requestFullscreen || wrap.webkitRequestFullscreen)?.call(wrap); }
+    }
+    // "Use this exploit path": keep the chosen node + everything up/downstream of it,
+    // fade the rest out, then re-run the layout on just the kept chain.
+    function pruneToPath(id, nodeId) {
+      const cy = cyById[id]; if (!cy) return;
+      const node = cy.getElementById(nodeId); if (!node.length) return;
+      const keep = node.union(node.successors()).union(node.predecessors());
+      const drop = cy.elements().not(keep);
+      cy.scratch('_pruned', true);
+      cy.elements().removeClass('dim hl');
+      const wrap = document.getElementById(id)?.closest('.graphwrap');
+      const sa = wrap && wrap.querySelector('[data-act=showall]'); if (sa) sa.style.display = 'inline-flex';
+      if (!drop.length) { cy.fit(keep, 24); return; }
+      // Hide the other branches immediately, hold the kept nodes in place for a
+      // beat, then re-run the layout (animated) so the chosen chain tidies up.
+      drop.hide();
+      cy.fit(keep, 24);
+      setTimeout(() => {
+        const roots = keep.nodes().roots();
+        keep.layout({ ...LAYOUTS.breadthfirst, roots: roots.length ? roots : undefined, animate: true, animationDuration: 450 }).run();
+        setTimeout(() => cy.fit(keep, 24), 480);
+      }, 520);
+    }
+    function restoreGraph(id) {
+      const cy = cyById[id]; if (!cy) return;
+      cy.scratch('_pruned', false);
+      cy.elements().show().removeClass('dim hl').style('opacity', 1);
+      const wrap = document.getElementById(id)?.closest('.graphwrap');
+      const sa = wrap && wrap.querySelector('[data-act=showall]'); if (sa) sa.style.display = 'none';
+      runLayout(id);
+    }
+    if (typeof document !== 'undefined') document.addEventListener('fullscreenchange', () => setTimeout(resizeAllGraphs, 60));
+
     function drawGraph(id, els, roots) {
       const container = document.getElementById(id);
       if (!container) return;
@@ -201,6 +254,35 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       let cy = cyById[id];
       if (!cy) {
         cy = cyById[id] = cytoscape({ container, style: GRAPH_STYLE, wheelSensitivity: 0.2, minZoom: 0.15, maxZoom: 3 });
+        const ctrls = wrap && wrap.querySelector('.graph-controls');
+        if (ctrls) {
+          const fs = document.createElement('button'); fs.type = 'button'; fs.className = 'gc'; fs.dataset.cy = id; fs.dataset.act = 'fs'; fs.title = 'Fullscreen the map'; fs.textContent = '⛶'; ctrls.appendChild(fs);
+          const sa = document.createElement('button'); sa.type = 'button'; sa.className = 'gc gc-showall'; sa.dataset.cy = id; sa.dataset.act = 'showall'; sa.title = 'Restore the whole map'; sa.textContent = 'show all'; sa.style.display = 'none'; ctrls.appendChild(sa);
+        }
+        // context menu: "use this exploit path"
+        const menu = document.createElement('div'); menu.className = 'cy-menu'; menu.style.display = 'none';
+        menu.innerHTML = '<button type="button" class="cy-menu-use">⛓ use this path</button>';
+        if (wrap) wrap.appendChild(menu);
+        let menuTarget = null;
+        const hideMenu = () => { menu.style.display = 'none'; menuTarget = null; };
+        cy.on('tap', 'node', (e) => {
+          menuTarget = e.target.id();
+          const p = e.target.renderedPosition();
+          menu.style.left = Math.round(p.x) + 'px';
+          menu.style.top = Math.round(p.y) + 'px';
+          menu.style.display = 'block';
+        });
+        cy.on('tap', (e) => { if (e.target === cy) hideMenu(); });
+        cy.on('pan zoom', hideMenu);
+        menu.querySelector('.cy-menu-use').addEventListener('click', () => { if (menuTarget) pruneToPath(id, menuTarget); hideMenu(); });
+        // hover: highlight everything downstream of the hovered node, dim the rest
+        cy.on('mouseover', 'node', (e) => {
+          if (cy.scratch('_pruned')) return;
+          const down = e.target.union(e.target.successors());
+          cy.elements().addClass('dim');
+          down.removeClass('dim').addClass('hl');
+        });
+        cy.on('mouseout', 'node', () => { if (!cy.scratch('_pruned')) cy.elements().removeClass('dim hl'); });
         if (wrap) wrap.querySelectorAll('.gc').forEach((btn) => btn.addEventListener('click', () => {
           const act = btn.dataset.act;
           const cx = container.clientWidth / 2, cyy = container.clientHeight / 2;
@@ -209,10 +291,14 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
           else if (act === 'fit') cy.fit(undefined, 24);
           else if (act === 'relayout') runLayout(id);
           else if (act === 'shuffle') { layoutIdx[id] = ((layoutIdx[id] ?? 0) + 1) % LAYOUT_ORDER.length; runLayout(id); }
+          else if (act === 'fs') toggleFullscreen(wrap);
+          else if (act === 'showall') restoreGraph(id);
         }));
       }
       cy.elements().remove();
       cy.add(els);
+      cy.scratch('_pruned', false);
+      const saBtn = wrap && wrap.querySelector('[data-act=showall]'); if (saBtn) saBtn.style.display = 'none';
       cy.resize();
       lastRoots[id] = roots?.length ? roots : null;
       if (layoutIdx[id] === undefined) layoutIdx[id] = 0;
@@ -405,6 +491,23 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
 
     // --- wiring ---
     function wire() {
+      const wrapEl = document.getElementById('q-wrap');
+      const vt = document.getElementById('view-toggle');
+      if (vt) vt.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+        vt.querySelectorAll('button').forEach((x) => x.classList.remove('on'));
+        b.classList.add('on');
+        wrapEl.classList.toggle('q-expanded', b.dataset.view === 'expanded');
+        try { localStorage.setItem('lc-view', b.dataset.view); } catch (e) {}
+        setTimeout(resizeAllGraphs, 70);
+      }));
+      const rail = document.getElementById('rail-toggle');
+      if (rail) rail.addEventListener('click', () => {
+        const c = wrapEl.classList.toggle('rail-collapsed');
+        rail.textContent = c ? '⟩ panel' : '⟨ panel';
+        setTimeout(resizeAllGraphs, 70);
+      });
+      try { if (localStorage.getItem('lc-view') === 'expanded') document.querySelector('#view-toggle [data-view=expanded]')?.click(); } catch (e) {}
+
       document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
         document.querySelectorAll('.panel').forEach((x) => x.classList.remove('active'));

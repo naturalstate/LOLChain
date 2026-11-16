@@ -294,6 +294,43 @@ a:hover { color: var(--text); }
 .site-footer a { color: var(--text-muted); }
 .site-footer a:hover { color: var(--accent); }
 
+/* --- Graph: hover menu, view toggles, expanded + fullscreen --- */
+.cy-menu { position: absolute; z-index: 5; transform: translate(-50%, 10px); }
+.cy-menu button {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+  white-space: nowrap; cursor: pointer; padding: 7px 11px; border-radius: 6px;
+  background: rgba(15,20,28,0.96); border: 1px solid var(--accent); color: var(--accent);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+}
+.cy-menu button:hover { background: var(--accent); color: #0a0e14; }
+.gc.gc-showall { color: var(--accent); border-color: var(--accent); }
+
+.q-viewbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 14px; }
+.vbtn {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-strong);
+  background: transparent; color: var(--text-dim); cursor: pointer;
+}
+.vbtn:hover { color: var(--text); border-color: var(--accent); }
+
+/* Expanded view: break out of the centred column, taller map, scrolling result list */
+.wrap.q-expanded { max-width: 100%; padding: 0 16px; }
+.wrap.q-expanded .mode-layout { grid-template-columns: 260px 1fr; gap: 24px; }
+.wrap.q-expanded .graphbox { height: 72vh; }
+.wrap.q-expanded #f-results, .wrap.q-expanded #g-results, .wrap.q-expanded #b-results { max-height: 72vh; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.wrap.q-expanded #f-results::-webkit-scrollbar, .wrap.q-expanded #g-results::-webkit-scrollbar, .wrap.q-expanded #b-results::-webkit-scrollbar { width: 8px; }
+.wrap.q-expanded #f-results::-webkit-scrollbar-thumb, .wrap.q-expanded #g-results::-webkit-scrollbar-thumb, .wrap.q-expanded #b-results::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+/* Collapse the controls rail for an even wider map */
+.wrap.rail-collapsed .mode-layout { grid-template-columns: 1fr; }
+.wrap.rail-collapsed .controls { display: none; }
+
+/* True fullscreen: the map container fills the screen, nothing else */
+.graphwrap:fullscreen { position: static; top: auto; margin: 0; padding: 0; background: var(--bg); }
+.graphwrap:fullscreen .graphbox { height: 100vh; border: none; border-radius: 0; }
+.graphwrap:-webkit-full-screen { background: var(--bg); }
+.graphwrap:-webkit-full-screen .graphbox { height: 100vh; border: none; border-radius: 0; }
+
 /* --- Responsive --- */
 @media (max-width: 860px) {
   .layout, .detail, .query-layout, .mode-layout { grid-template-columns: 1fr; gap: 22px; }
