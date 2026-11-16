@@ -4,7 +4,7 @@
 
 <p align="center">
   <b><a href="https://naturalstate.github.io/LOLChain/">🔗 Live site</a></b>
-  &nbsp;·&nbsp; 74 vulns &nbsp;·&nbsp; 68 curated chains &nbsp;·&nbsp; 143 derived candidates &nbsp;·&nbsp; 7 categories
+  &nbsp;·&nbsp; 80 vulns &nbsp;·&nbsp; 68 curated chains &nbsp;·&nbsp; 262 derived candidates &nbsp;·&nbsp; 8 categories
 </p>
 
 ---
@@ -81,7 +81,7 @@ Chains are tiered by sophistication, and every edge is one of two kinds:
 
 ## Categories &amp; example chains
 
-LolChain spans **7 categories**. One representative chain from each (`A —[capability]→ B`):
+LolChain spans **8 categories**. One representative chain from each (`A —[capability]→ B`):
 
 ### 🔵 web
 The classic surface — injection, auth, and client-side flaws.
@@ -126,6 +126,13 @@ Enterprise and infrastructure kill-chains.
 ```
 ProxyLogon (pre-auth SSRF) —[arbitrary-file-write]→ Webshell  ⇒  remote code execution
 Low-and-Slow Enterprise —[domain-credentials]→ AD Domain Takeover  ⇒  domain admin
+```
+
+### 🟤 host
+The post-RCE ground truth of any pentest: a shell is not root — local privesc bridges them.
+```
+Webshell —[os-command-exec]→ SUID Binary Abuse  ⇒  privilege escalation
+Webshell —[os-command-exec]→ SeImpersonate → SYSTEM —[priv-esc]→ Credential Dumping —[domain-credentials]→ AD Domain Takeover  ⇒  domain admin
 ```
 
 ## The vocabulary
@@ -252,7 +259,7 @@ docs/images/              # README graphics
 ## Status
 
 - [x] **Phase 0** — pipeline skeleton (schema, vocab, seed nodes, build, filterable UI).
-- [x] **Phase 1** — dataset (74 vulns, 68 curated chains, 7 categories).
+- [x] **Phase 1** — dataset (80 vulns, 68 curated chains, 8 categories).
 - [x] **Phase 2** — "I have X" forward query + facets + per-node pages.
 - [x] **Phase 3** — goal-directed + constrained + backward pathfinding; derived chains.
 - [x] **Phase 4** — interactive graph visualization (Cytoscape).

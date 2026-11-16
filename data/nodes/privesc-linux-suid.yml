@@ -1,0 +1,29 @@
+id: privesc-linux-suid
+name: SUID/SGID Binary Abuse
+slug: privesc-linux-suid
+tier: basic
+category: host
+aliases: [suid-privesc, sgid-abuse, setuid-abuse]
+summary: >
+  A SUID/SGID binary runs with its owner's privileges regardless of the caller. If such a
+  binary can execute commands, read/write protected files, or load attacker code (again,
+  GTFOBins), a low-priv shell becomes root.
+requires:
+  - os-command-exec
+provides:
+  - priv-esc
+achieves:
+  - privilege-escalation
+detection: >
+  Unexpected SUID/SGID binaries (find / -perm -4000); SUID programs spawning shells;
+  writes to protected paths by non-root processes.
+remediation: >
+  Strip the SUID/SGID bit from binaries that don't need it; mount with nosuid where
+  possible; baseline and monitor the SUID set.
+mitre: [T1548.001]
+references:
+  - title: "GTFOBins — SUID"
+    url: https://gtfobins.github.io/#+suid
+  - title: "MITRE ATT&CK — Setuid and Setgid (T1548.001)"
+    url: https://attack.mitre.org/techniques/T1548/001/
+chains: []

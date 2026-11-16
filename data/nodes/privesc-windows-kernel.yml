@@ -1,0 +1,27 @@
+id: privesc-windows-kernel
+name: Windows Kernel / Driver Exploit
+slug: privesc-windows-kernel
+tier: advanced
+category: host
+aliases: [windows-kernel-exploit, byovd, driver-exploit]
+summary: >
+  A local Windows kernel or signed-but-vulnerable driver flaw (BYOVD — bring your own
+  vulnerable driver) escalates a shell to SYSTEM on an unpatched host. Often the fallback
+  when token and service routes are closed.
+requires:
+  - os-command-exec
+provides:
+  - priv-esc
+achieves:
+  - privilege-escalation
+detection: >
+  Known-vulnerable drivers loaded; unexpected kernel-mode writes; exploit tooling;
+  version-based exposure; EDR driver-load and token-swap telemetry.
+remediation: >
+  Patch; enable the Microsoft vulnerable-driver blocklist and HVCI; restrict driver
+  loading; least-privilege local accounts.
+mitre: [T1068, T1211]
+references:
+  - title: "MITRE ATT&CK — Exploitation for Privilege Escalation (T1068)"
+    url: https://attack.mitre.org/techniques/T1068/
+chains: []

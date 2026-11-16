@@ -1,0 +1,27 @@
+id: privesc-windows-potato
+name: SeImpersonate → SYSTEM (Potato)
+slug: privesc-windows-potato
+tier: advanced
+category: host
+aliases: [potato, juicypotato, printspoofer, roguepotato, seimpersonate]
+summary: >
+  Windows service accounts often hold SeImpersonatePrivilege. The Potato family
+  (JuicyPotato, RoguePotato, PrintSpoofer, GodPotato) coerces a privileged token and
+  impersonates it, turning a service-level shell (IIS/MSSQL/web app) into SYSTEM.
+requires:
+  - os-command-exec
+provides:
+  - priv-esc
+achieves:
+  - privilege-escalation
+detection: >
+  Named-pipe/RPC token-impersonation patterns; service accounts spawning SYSTEM
+  processes; PrintSpoofer/Potato tool signatures; unexpected COM/SPN activity.
+remediation: >
+  Remove SeImpersonate/SeAssignPrimaryToken from accounts that don't need it; patch;
+  isolate service identities; monitor token manipulation.
+mitre: [T1134.001]
+references:
+  - title: "MITRE ATT&CK — Access Token Manipulation: Token Impersonation/Theft (T1134.001)"
+    url: https://attack.mitre.org/techniques/T1134/001/
+chains: []

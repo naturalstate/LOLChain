@@ -1,0 +1,27 @@
+id: privesc-linux-kernel
+name: Linux Kernel / Capability Exploit
+slug: privesc-linux-kernel
+tier: advanced
+category: host
+aliases: [kernel-exploit, pwnkit, dirtypipe, dirtycow]
+summary: >
+  A local kernel or privileged-helper flaw (PwnKit/pkexec CVE-2021-4034, Dirty Pipe
+  CVE-2022-0847, DirtyCOW, OverlayFS) escalates a shell straight to root. Reliable on
+  unpatched hosts and a common finisher after web RCE.
+requires:
+  - os-command-exec
+provides:
+  - priv-esc
+achieves:
+  - privilege-escalation
+detection: >
+  Known-exploit binaries dropped and run; crashes/oops in kernel logs; unexpected root
+  shells; pkexec/polkit anomalies; version-based exposure from patch state.
+remediation: >
+  Patch the kernel and setuid helpers promptly; enable unprivileged-userns and other
+  hardening; restrict local accounts; EDR on local-exploit patterns.
+mitre: [T1068]
+references:
+  - title: "MITRE ATT&CK — Exploitation for Privilege Escalation (T1068)"
+    url: https://attack.mitre.org/techniques/T1068/
+chains: []

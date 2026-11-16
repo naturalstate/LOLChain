@@ -1,0 +1,29 @@
+id: privesc-linux-sudo
+name: Sudo Misconfiguration (GTFOBins)
+slug: privesc-linux-sudo
+tier: basic
+category: host
+aliases: [sudo-privesc, gtfobins-sudo, sudo-abuse]
+summary: >
+  With a shell on a Linux host, an attacker abuses an over-permissive sudoers entry —
+  a binary allowed via sudo that can spawn a shell, read/write arbitrary files, or run
+  code (the GTFOBins catalogue) — to execute as root. The classic post-RCE escalation.
+requires:
+  - os-command-exec
+provides:
+  - priv-esc
+achieves:
+  - privilege-escalation
+detection: >
+  sudo invocations of shell-capable binaries (vi, less, awk, find, tar, env) by service
+  accounts; unexpected root processes spawned from the web/app user.
+remediation: >
+  Minimise sudoers; avoid NOPASSWD and shell-escapable binaries; prefer purpose-built
+  wrappers; audit sudo rules against GTFOBins.
+mitre: [T1548.003]
+references:
+  - title: "GTFOBins — Unix binaries for privilege escalation"
+    url: https://gtfobins.github.io/
+  - title: "MITRE ATT&CK — Abuse Elevation Control Mechanism: Sudo and Sudo Caching (T1548.003)"
+    url: https://attack.mitre.org/techniques/T1548/003/
+chains: []

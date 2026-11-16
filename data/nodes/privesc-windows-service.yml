@@ -1,0 +1,28 @@
+id: privesc-windows-service
+name: Weak Service / Unquoted Path / DLL Hijack
+slug: privesc-windows-service
+tier: advanced
+category: host
+aliases: [weak-service-perms, unquoted-service-path, dll-hijack, alwaysinstallelevated]
+summary: >
+  Misconfigured Windows services escalate a local shell: weak service permissions let you
+  reconfigure the binary path, an unquoted service path lets you drop a binary earlier in
+  the path, a writable directory enables DLL hijack, and AlwaysInstallElevated runs an MSI
+  as SYSTEM.
+requires:
+  - os-command-exec
+provides:
+  - priv-esc
+achieves:
+  - privilege-escalation
+detection: >
+  Service binary/path/config changes; new binaries in service or unquoted-path
+  directories; MSI installs under SYSTEM; WinPEAS/PowerUp-style enumeration.
+remediation: >
+  Fix service ACLs and quote paths; remove write access to service dirs; disable
+  AlwaysInstallElevated; monitor service configuration changes.
+mitre: [T1574.009, T1574.001, T1543.003]
+references:
+  - title: "MITRE ATT&CK — Hijack Execution Flow (T1574)"
+    url: https://attack.mitre.org/techniques/T1574/
+chains: []
