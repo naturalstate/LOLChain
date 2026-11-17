@@ -53,11 +53,17 @@ applies to all three maps.
   plain-text outline (native `<details>`), ordered top-down. Each step expands to
   its summary, requires/provides/reaches chips, and a full-page link.
 
-## Phase 5 — Content pages
+## Phase 5 — Content pages ✅ (done 2026-11-17)
 
-Weave README content + the two SVGs (query-modes.svg, chain-map.svg) into the
-About page; keep About's existing added content; make About/README consistent.
-Draft a new front page.
+- New **landing page** at `/`: hero, CTAs (query + browse), stat strip,
+  authorized-use note, the chain-map SVG with caption, the query-modes SVG + three
+  mode cards, and a real-incident teaser row linking to About.
+- Catalog moved to **`/browse`** (nav gains "home" + "browse"); the old faceted
+  table/search is intact there.
+- **About** rewrite: woven in both SVGs (chain map + query modes), a "Grounded in
+  real incidents" section, the Simple mode + view-toggle/scope/chain-list notes,
+  and the full 9-category list — consistent with the README.
+- SVGs copied to `public/images/` so Astro serves them.
 
 ## Phase 6 — Node-page mini-diagram
 

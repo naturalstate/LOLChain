@@ -22,6 +22,16 @@ const { stats } = buildGraph();
         {stats.categoryCount} categories.
       </p>
 
+      <figure class="land-fig" style="margin:22px 0">
+        <img src={`${base}images/chain-map.svg`} alt="On-the-fly chain map: SSRF branching across cloud, network and kubernetes to three goals" loading="lazy" />
+        <figcaption>
+          One low-severity SSRF, three critical goals. Nodes colored by category;
+          <b>solid edges are curated</b> (cited), <b>dashed edges are derived</b>
+          (inferred from capability overlap &mdash; plausible, unverified); <b>red-bordered
+          nodes are goals</b>. Every edge is labeled with the linking capability.
+        </figcaption>
+      </figure>
+
       <h2>The core idea</h2>
       <p>
         Every vuln is a handoff. Each node <strong>requires</strong> some capabilities
@@ -55,6 +65,9 @@ const { stats } = buildGraph();
       </ul>
 
       <h2>Query modes</h2>
+      <figure class="land-fig" style="margin:6px 0 18px">
+        <img src={`${base}images/query-modes.svg`} alt="Three query modes: I have X, X to goal Z, I want Z" loading="lazy" />
+      </figure>
       <ul>
         <li><strong>I have X</strong> — forward reachability: everything a foothold
           unlocks, hop by hop.</li>
@@ -62,7 +75,14 @@ const { stats } = buildGraph();
           through a chosen node.</li>
         <li><strong>I want Z</strong> — backward search: what achieves the goal and what
           each step needs.</li>
+        <li><strong>Simple</strong> — one search box over every vuln, goal, and capability,
+          with click-to-drill into what reaches a step and where it leads.</li>
       </ul>
+      <p>
+        Each map also has a <strong>Graph / Flowchart / Text</strong> view toggle, a soft
+        <strong>test-scope</strong> filter, and a left-rail <strong>chain list</strong> you
+        can prune step-by-step to isolate a single path.
+      </p>
 
       <h2>Reading a node</h2>
       <p>
@@ -71,13 +91,36 @@ const { stats } = buildGraph();
         with detection, remediation, and MITRE ATT&amp;CK mappings.
       </p>
 
+      <h2>Grounded in real incidents</h2>
+      <p>
+        Many chains are modelled directly on public breach post-mortems and vendor research
+        — each node cites its sources, and <strong>references are never invented</strong>.
+        A few of the chains the graph encodes:
+      </p>
+      <ul>
+        <li><strong>Capital One</strong> (2019) — WAF SSRF → EC2 IMDS role creds → S3 bulk read.</li>
+        <li><strong>Log4Shell</strong> (CVE-2021-44228) — logged <code>${'{'}jndi:…{'}'}</code> → remote class load / SSRF → IMDS.</li>
+        <li><strong>MOVEit</strong> (Cl0p, 2023) — SQLi → <code>human2.aspx</code> webshell → Azure Blob keys → data theft.</li>
+        <li><strong>Uber</strong> (2022, Lapsus$) — MFA fatigue → creds in a PowerShell script → PAM vault.</li>
+        <li><strong>SolarWinds</strong> (2020) — build-server implant → signed backdoored Orion → downstream.</li>
+        <li><strong>Human-operated ransomware</strong> (CISA) — phishing payload → credential dumping → AD takeover → mass encryption.</li>
+      </ul>
+      <p>
+        The recurring hinge: a “boring” foothold (SSRF, an exposed dashboard, a leaked key,
+        a stolen token, code exec on a host) is converted into standing or temporary
+        cloud/service credentials, which then unlock data or code. <strong>Social
+        engineering is a first-class vector</strong> here — phishing, vishing, SIM-swap,
+        MFA-fatigue and OAuth-consent are nodes that hand off real capabilities into the
+        rest of the graph.
+      </p>
+
       <h2>Contributing</h2>
       <p>
         Data is YAML in <code>data/nodes/</code>, validated against a JSON Schema. See
         <a href="https://github.com/naturalstate/LOLChain">the repository</a> and <code>CONTRIBUTING.md</code>
         for the node shape and how to add one. Tiers: <strong>basic</strong>,
         <strong>advanced</strong>, <strong>expert</strong>. Categories: web, cloud,
-        kubernetes, cicd, llm, mobile, network.
+        kubernetes, cicd, llm, mobile, network, host, active-directory.
       </p>
 
       <p style="margin-top:28px"><a href={`${base}scope/`}>→ Scope &amp; ethics</a></p>

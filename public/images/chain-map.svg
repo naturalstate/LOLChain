@@ -1,0 +1,108 @@
+<svg width="1060" height="560" viewBox="0 0 1060 560" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f17"/>
+      <stop offset="100%" stop-color="#090c12"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#4a5162"/>
+    </marker>
+    <marker id="arrowgoal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#7a4247"/>
+    </marker>
+  </defs>
+
+  <rect width="1060" height="560" rx="16" fill="url(#bg)"/>
+  <rect x="1" y="1" width="1058" height="558" rx="15" fill="none" stroke="#1d2430" stroke-width="1.5"/>
+
+  <text x="36" y="42" font-size="20" font-weight="700" fill="#e4e8f0">On-the-fly chain map</text>
+  <text x="36" y="66" font-size="14" fill="#8a93a6">Pick a foothold; LolChain walks the capability graph and draws every path it unlocks. One low-severity SSRF, three critical goals.</text>
+
+  <!-- ===== edges (drawn first, under nodes) ===== -->
+  <g font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="11">
+    <!-- SSRF -> IMDS -->
+    <line x1="240" y1="280" x2="276" y2="200" stroke="#4a5162" stroke-width="1.6" marker-end="url(#arrow)"/>
+    <text x="250" y="226" fill="#4ea1d3">server-side request</text>
+    <!-- SSRF -> ProxyLogon (derived) -->
+    <line x1="240" y1="290" x2="276" y2="410" stroke="#333b49" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+    <text x="250" y="366" fill="#5b6374">server-side request</text>
+    <!-- IMDS -> IAM Privesc -->
+    <line x1="460" y1="180" x2="536" y2="120" stroke="#4a5162" stroke-width="1.6" marker-end="url(#arrow)"/>
+    <text x="470" y="140" fill="#4ea1d3">cloud credentials</text>
+    <!-- IMDS -> Data Access -->
+    <line x1="460" y1="190" x2="536" y2="230" stroke="#4a5162" stroke-width="1.6" marker-end="url(#arrow)"/>
+    <text x="470" y="222" fill="#4ea1d3">cloud credentials</text>
+    <!-- ProxyLogon -> Pod RCE (derived) -->
+    <line x1="460" y1="410" x2="536" y2="410" stroke="#333b49" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+    <text x="474" y="400" fill="#5b6374">os command exec</text>
+    <!-- IAM -> goal CAC -->
+    <line x1="720" y1="120" x2="816" y2="120" stroke="#7a4247" stroke-width="1.6" marker-end="url(#arrowgoal)"/>
+    <text x="736" y="110" fill="#8a6a6c">achieves</text>
+    <!-- Data Access -> goal breach -->
+    <line x1="720" y1="230" x2="816" y2="230" stroke="#7a4247" stroke-width="1.6" marker-end="url(#arrowgoal)"/>
+    <text x="736" y="220" fill="#8a6a6c">achieves</text>
+    <!-- Pod RCE -> goal cluster -->
+    <line x1="720" y1="410" x2="816" y2="410" stroke="#7a4247" stroke-width="1.6" marker-end="url(#arrowgoal)"/>
+    <text x="736" y="400" fill="#8a6a6c">achieves</text>
+  </g>
+
+  <!-- ===== nodes ===== -->
+  <g font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="12.5">
+    <!-- SSRF (start, web) -->
+    <rect x="60" y="260" width="180" height="40" rx="9" fill="#141b26" stroke="#e4e8f0" stroke-width="1.6"/>
+    <circle cx="80" cy="280" r="5" fill="#4ea1d3"/>
+    <text x="94" y="284" fill="#e4e8f0" font-weight="600">SSRF</text>
+    <text x="150" y="250" text-anchor="middle" font-size="10" fill="#5b6374">START</text>
+
+    <!-- Cloud IMDS (cloud) -->
+    <rect x="280" y="160" width="180" height="40" rx="9" fill="#141b26" stroke="#2a3342" stroke-width="1.2"/>
+    <circle cx="300" cy="180" r="5" fill="#d9a441"/>
+    <text x="314" y="184" fill="#e4e8f0">Cloud IMDS Theft</text>
+
+    <!-- ProxyLogon (network) -->
+    <rect x="280" y="390" width="180" height="40" rx="9" fill="#141b26" stroke="#2a3342" stroke-width="1.2"/>
+    <circle cx="300" cy="410" r="5" fill="#8a93a6"/>
+    <text x="314" y="414" fill="#e4e8f0">ProxyLogon</text>
+
+    <!-- IAM Privesc (cloud) -->
+    <rect x="540" y="100" width="180" height="40" rx="9" fill="#141b26" stroke="#2a3342" stroke-width="1.2"/>
+    <circle cx="560" cy="120" r="5" fill="#d9a441"/>
+    <text x="574" y="124" fill="#e4e8f0">Cloud IAM Privesc</text>
+
+    <!-- Cloud Data Access (cloud) -->
+    <rect x="540" y="210" width="180" height="40" rx="9" fill="#141b26" stroke="#2a3342" stroke-width="1.2"/>
+    <circle cx="560" cy="230" r="5" fill="#d9a441"/>
+    <text x="574" y="234" fill="#e4e8f0">Cloud Data Access</text>
+
+    <!-- Pod RCE (k8s) -->
+    <rect x="540" y="390" width="180" height="40" rx="9" fill="#141b26" stroke="#2a3342" stroke-width="1.2"/>
+    <circle cx="560" cy="410" r="5" fill="#56b877"/>
+    <text x="574" y="414" fill="#e4e8f0">Pod RCE</text>
+
+    <!-- goal: cloud account compromise -->
+    <rect x="820" y="100" width="200" height="40" rx="9" fill="#241015" stroke="#e5484d" stroke-width="1.5"/>
+    <text x="838" y="124" fill="#e5484d">&#9873;</text>
+    <text x="856" y="124" fill="#ef8a8e" font-weight="700">Cloud account compromise</text>
+
+    <!-- goal: data breach -->
+    <rect x="820" y="210" width="200" height="40" rx="9" fill="#241015" stroke="#e5484d" stroke-width="1.5"/>
+    <text x="838" y="234" fill="#e5484d">&#9873;</text>
+    <text x="856" y="234" fill="#ef8a8e" font-weight="700">Data breach</text>
+
+    <!-- goal: cluster admin -->
+    <rect x="820" y="390" width="200" height="40" rx="9" fill="#241015" stroke="#e5484d" stroke-width="1.5"/>
+    <text x="838" y="414" fill="#e5484d">&#9873;</text>
+    <text x="856" y="414" fill="#ef8a8e" font-weight="700">Kubernetes cluster admin</text>
+  </g>
+
+  <!-- ===== legend ===== -->
+  <g font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="11" fill="#8a93a6">
+    <circle cx="44" cy="508" r="5" fill="#4ea1d3"/><text x="56" y="512">web</text>
+    <circle cx="110" cy="508" r="5" fill="#d9a441"/><text x="122" y="512">cloud</text>
+    <circle cx="186" cy="508" r="5" fill="#56b877"/><text x="198" y="512">k8s</text>
+    <circle cx="246" cy="508" r="5" fill="#8a93a6"/><text x="258" y="512">network</text>
+    <line x1="344" y1="508" x2="372" y2="508" stroke="#4a5162" stroke-width="1.6"/><text x="380" y="512">curated</text>
+    <line x1="462" y1="508" x2="490" y2="508" stroke="#333b49" stroke-width="1.6" stroke-dasharray="4 4"/><text x="498" y="512">derived · unverified</text>
+    <rect x="690" y="502" width="12" height="12" rx="3" fill="none" stroke="#e5484d" stroke-width="1.5"/><text x="710" y="512">goal</text>
+  </g>
+</svg>
