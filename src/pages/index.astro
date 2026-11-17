@@ -3,104 +3,158 @@ import Base from '../layouts/Base.astro';
 import { buildGraph } from '../lib/graph.mjs';
 
 const base = import.meta.env.BASE_URL;
-const { stats } = buildGraph();
+const { nodes, capabilities, stats } = buildGraph();
 
-const modes = [
-  { tag: 'I have X', q: '“I’ve got a foothold on X (or hold capability C) — now what?”',
-    a: 'Forward reachability: every vuln those capabilities unlock, hop by hop, with the linking capability and the goals reached.' },
-  { tag: 'X → goal Z', q: '“From X, how do I reach goal Z?” (optionally through node Y)',
-    a: 'Ranked paths — documented first, then fully-curated, then shorter, then easier.' },
-  { tag: 'I want Z', q: '“I want to achieve Z — what gives it?”',
-    a: 'Backward search: every vuln that achieves Z and the entry paths that reach each one.' },
-];
+// Facet counts (static totals computed at build time).
+const tiers = ['basic', 'advanced', 'expert'];
+const tierCounts = Object.fromEntries(tiers.map((t) => [t, nodes.filter((n) => n.tier === t).length]));
+const categories = [...new Set(nodes.map((n) => n.category))].sort();
+const catCounts = Object.fromEntries(categories.map((c) => [c, nodes.filter((n) => n.category === c).length]));
+const capLabel = Object.fromEntries(capabilities.map((c) => [c.slug, c.label]));
+const capCounts = {};
+for (const n of nodes) for (const p of n.provides) capCounts[p] = (capCounts[p] ?? 0) + 1;
+const capsByUse = Object.keys(capCounts).sort((a, b) => capCounts[b] - capCounts[a]);
 
-const incidents = [
-  'Capital One — SSRF → IMDS → S3',
-  'Log4Shell — JNDI → RCE / IMDS',
-  'MOVEit — SQLi → webshell → blob keys',
-  'Uber 2022 — MFA fatigue → PAM vault',
-  'SolarWinds — build implant → signed backdoor',
-  'Scattered Spider — vishing → internal access',
-  'Citrix Bleed — token leak → past MFA',
-  'Ransomware — cred dumping → AD takeover',
-];
-
-const desc = 'Living Off the Land, for vulnerability chains — a queryable graph of exploit-chain capability handoffs.';
+const sorted = [...nodes].sort((a, b) => a.name.localeCompare(b.name));
+const chainCountFor = (n) => n.chains.length;
 ---
-<Base title="LolChain" description={desc}>
+<Base>
   <div class="wrap">
-    <section class="hero landing-hero">
+    <section class="hero">
       <div class="label kicker">Exploit-chain reference</div>
       <h1>Living Off the Land,<br />for vulnerability chains.</h1>
-      <p class="lede">
-        The LoL sites catalog single primitives. Real breaches are <em>chains</em> &mdash; a
-        &ldquo;boring&rdquo; SSRF becomes cloud credentials becomes an IAM-admin role becomes
-        a data breach. LolChain catalogs the chains and makes them queryable. Every vuln is a
-        handoff: it <em>requires</em> capabilities and <em>provides</em> others, and an edge
-        exists wherever one node&rsquo;s output satisfies the next node&rsquo;s input.
+      <p>
+        Every vuln is a handoff: it <em>requires</em> capabilities and <em>provides</em>
+        others. Chains exist wherever one node's output satisfies the next node's input.
+        Tell it what you have; see what it chains into.
       </p>
-      <div class="cta-row">
-        <a class="btn primary" href={`${base}query/`}>&rarr; I have X, what can I chain into?</a>
-        <a class="btn" href={`${base}browse/`}>Browse the catalog</a>
-      </div>
-      <div class="stat-strip">
-        <span><b>{stats.nodeCount}</b> vulns</span>
-        <span><b>{stats.chainCount}</b> curated chains</span>
-        <span><b>{stats.derivedCount}</b> derived candidates</span>
-        <span><b>{stats.categoryCount}</b> categories</span>
-      </div>
+      <p style="margin-top:18px">
+        <a class="btn primary" href={`${base}query/`} style="text-decoration:none">→ I have X, what can I chain into?</a>
+      </p>
     </section>
 
-    <div class="authnote">
-      <b>Authorized use only.</b> A conceptual reference &mdash; the handoff, its outcome,
-      detection, and remediation, <em>not</em> copy-paste exploit code. Use the ideas only
-      against systems you are authorized to test. <a href={`${base}scope/`}>Scope &amp; ethics &rarr;</a>
+    <div class="toolbar">
+      <div class="search">
+        <span class="label">Search catalog</span>
+        <input id="q" type="text" placeholder="> ssrf, token, rce, cloud…" autocomplete="off" />
+      </div>
+      <div class="stats">
+        <span id="shown">{nodes.length}</span> shown
+        <span class="dot">·</span><b>{stats.nodeCount}</b> vulns
+        <span class="dot">·</span><b>{stats.chainCount}</b> chains
+        <span class="dot">·</span><b>{stats.documentedCount}</b> documented
+        <span class="dot">·</span><b>{stats.categoryCount}</b> categories
+      </div>
     </div>
 
-    <section class="land-sec">
-      <h2>The on-the-fly chain map</h2>
-      <p class="land-sub">
-        Pick a foothold and LolChain walks the capability graph, drawing every path it
-        unlocks &mdash; rendered live in the browser. One low-severity SSRF, three critical goals.
-      </p>
-      <figure class="land-fig">
-        <img src={`${base}images/chain-map.svg`} alt="On-the-fly chain map: SSRF branching across cloud, network and kubernetes to three goals" loading="lazy" />
-        <figcaption>
-          Nodes colored by category; <b>solid edges are curated</b> (cited), <b>dashed edges
-          are derived</b> (inferred from capability overlap &mdash; plausible, unverified);
-          <b>red-bordered nodes are goals</b>. Every edge is labeled with the capability that
-          links the two steps.
-        </figcaption>
-      </figure>
-    </section>
+    <div class="layout">
+      <aside class="facets">
+        <div class="facets-head">
+          <span class="label">Filters</span>
+          <button class="clear" id="clear">Clear</button>
+        </div>
 
-    <section class="land-sec">
-      <h2>Three ways to query</h2>
-      <figure class="land-fig">
-        <img src={`${base}images/query-modes.svg`} alt="Three query modes: I have X, X to goal Z, I want Z" loading="lazy" />
-      </figure>
-      <div class="mode-cards">
-        {modes.map((m) => (
-          <a class="mode-card" href={`${base}query/`}>
-            <div class="mc-tag">{m.tag}</div>
-            <div class="mc-q">{m.q}</div>
-            <div class="mc-a">{m.a}</div>
-          </a>
-        ))}
-      </div>
-      <p class="land-sub">All three run <b>client-side</b> over a single <code>graph.json</code> &mdash; no backend, no telemetry.</p>
-    </section>
+        <div class="facet-group">
+          <div class="head"><span class="label">Tier</span></div>
+          {tiers.map((t) => (
+            <div class="facet" data-type="tier" data-value={t}>
+              <span>{t}</span><span class="count">{tierCounts[t]}</span>
+            </div>
+          ))}
+        </div>
 
-    <section class="land-sec">
-      <h2>Grounded in real incidents</h2>
-      <p class="land-sub">
-        Many chains are modelled directly on public breach post-mortems and vendor research
-        &mdash; each node cites its sources, and references are never invented.
-      </p>
-      <div class="inc-chips">
-        {incidents.map((i) => <span class="inc-chip">{i}</span>)}
-      </div>
-      <p class="land-sub" style="margin-top:14px"><a href={`${base}about/`}>How the model works, in full &rarr;</a></p>
-    </section>
+        <div class="facet-group">
+          <div class="head"><span class="label">Category</span></div>
+          {categories.map((c) => (
+            <div class="facet" data-type="category" data-value={c}>
+              <span>{c}</span><span class="count">{catCounts[c]}</span>
+            </div>
+          ))}
+        </div>
+
+        <div class="facet-group">
+          <div class="head"><span class="label">Provides</span></div>
+          {capsByUse.map((slug) => (
+            <div class="facet" data-type="cap" data-value={slug}>
+              <span>{capLabel[slug] ?? slug}</span><span class="count">{capCounts[slug]}</span>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      <section class="table">
+        <div class="thead">
+          <span>Vuln</span><span>Tier</span><span>Category</span><span>Provides</span><span>Chains</span>
+        </div>
+        <div id="rows">
+          {sorted.map((n) => (
+            <a
+              class="row"
+              href={`${base}node/${n.slug}/`}
+              data-tier={n.tier}
+              data-category={n.category}
+              data-caps={n.provides.join(' ')}
+              data-search={`${n.name} ${n.slug} ${(n.aliases ?? []).join(' ')} ${n.summary} ${n.provides.join(' ')} ${n.requires.join(' ')}`.toLowerCase()}
+            >
+              <span>
+                <span class="nname">{n.name}</span>
+                <span class="nsum">{n.summary}</span>
+              </span>
+              <span><span class={`chip tier-${n.tier}`}>{n.tier}</span></span>
+              <span class="cat">{n.category}</span>
+              <span class="cap-cell">
+                {n.provides.slice(0, 3).map((p) => (
+                  <span class="chip provides">{capLabel[p] ?? p}</span>
+                ))}
+                {n.provides.length > 3 && <span class="chip">+{n.provides.length - 3}</span>}
+              </span>
+              <span class="count-pill"><b>{chainCountFor(n)}</b> chain{chainCountFor(n) === 1 ? '' : 's'}</span>
+            </a>
+          ))}
+        </div>
+        <div class="empty" id="empty" hidden>No vulns match these filters.</div>
+      </section>
+    </div>
   </div>
+
+  <script>
+    const active = { tier: new Set(), category: new Set(), cap: new Set() };
+    const rows = [...document.querySelectorAll('#rows .row')];
+    const q = document.getElementById('q');
+    const shown = document.getElementById('shown');
+    const empty = document.getElementById('empty');
+
+    function apply() {
+      const text = (q.value || '').trim().toLowerCase();
+      let count = 0;
+      for (const row of rows) {
+        const okTier = !active.tier.size || active.tier.has(row.dataset.tier);
+        const okCat = !active.category.size || active.category.has(row.dataset.category);
+        const caps = row.dataset.caps.split(' ');
+        const okCap = !active.cap.size || [...active.cap].every((c) => caps.includes(c));
+        const okText = !text || row.dataset.search.includes(text);
+        const visible = okTier && okCat && okCap && okText;
+        row.style.display = visible ? '' : 'none';
+        if (visible) count++;
+      }
+      shown.textContent = String(count);
+      empty.hidden = count !== 0;
+    }
+
+    document.querySelectorAll('.facet').forEach((el) => {
+      el.addEventListener('click', () => {
+        const set = active[el.dataset.type];
+        if (set.has(el.dataset.value)) { set.delete(el.dataset.value); el.classList.remove('active'); }
+        else { set.add(el.dataset.value); el.classList.add('active'); }
+        apply();
+      });
+    });
+    q.addEventListener('input', apply);
+    document.getElementById('clear').addEventListener('click', () => {
+      active.tier.clear(); active.category.clear(); active.cap.clear();
+      document.querySelectorAll('.facet.active').forEach((e) => e.classList.remove('active'));
+      q.value = '';
+      apply();
+    });
+  </script>
 </Base>
