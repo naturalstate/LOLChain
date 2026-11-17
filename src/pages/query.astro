@@ -209,18 +209,13 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       grid: { name: 'grid', padding: 20, avoidOverlapPadding: 16 },
     };
     const LAYOUT_ORDER = ['breadthfirst', 'cose', 'concentric', 'circle', 'grid'];
-    // Keep the default view readable: never auto-zoom below this; the user pans a big
-    // graph rather than squinting at a fully-fit, microscopic one.
-    const READABLE_MIN_ZOOM = 0.62;
-
     const cyById = {};
     const layoutIdx = {};
     const lastRoots = {};
 
-    // Fit, but don't zoom out past the readability floor (pan instead).
+    // Fit the whole graph into view (the start node stays on screen).
     function fitReadable(cy, eles) {
       cy.fit(eles, 26);
-      if (cy.zoom() < READABLE_MIN_ZOOM) { cy.zoom(READABLE_MIN_ZOOM); cy.center(eles); }
     }
 
     function runLayout(id) {
@@ -295,6 +290,17 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const box = document.getElementById(id)?.closest('.graphwrap')?.querySelector('.cy-chainkey');
       if (box) box.style.display = 'none';
     }
+    // Top-left: just the hovered node's title (non-blocking).
+    function showNodeKey(id, node) {
+      const box = document.getElementById(id)?.closest('.graphwrap')?.querySelector('.cy-nodekey');
+      if (!box) return;
+      box.innerHTML = `<span class="ck-node" style="color:${DOMAIN_COLOR[node.data('cat')] ?? '#8a93a6'}">${esc(node.data('label'))}</span>`;
+      box.style.display = 'block';
+    }
+    function hideNodeKey(id) {
+      const box = document.getElementById(id)?.closest('.graphwrap')?.querySelector('.cy-nodekey');
+      if (box) box.style.display = 'none';
+    }
 
     // "Use this exploit path": keep the chosen node + everything up/downstream of it,
     // fade the rest out, then re-run the layout on just the kept chain.
@@ -310,6 +316,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       cy.elements().removeClass('dim hl');
       const wrap = document.getElementById(id)?.closest('.graphwrap');
       const sa = wrap && wrap.querySelector('[data-act=showall]'); if (sa) sa.style.display = 'inline-flex';
+      showChainKey(id, keep); // bottom-left: the chain you selected
       if (!drop.length) { fitReadable(cy, keep); return; }
       // Hide the other branches immediately, hold the kept nodes in place for a
       // beat, then re-run the layout so the chosen chain tidies up. A straight
@@ -332,6 +339,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       cy.elements().show().removeClass('dim hl').style('opacity', 1);
       const wrap = document.getElementById(id)?.closest('.graphwrap');
       const sa = wrap && wrap.querySelector('[data-act=showall]'); if (sa) sa.style.display = 'none';
+      hideChainKey(id);
       runLayout(id);
     }
     // After entering OR leaving fullscreen the container size changes; the browser
@@ -411,9 +419,17 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         const menu = document.createElement('div'); menu.className = 'cy-menu'; menu.style.display = 'none';
         menu.innerHTML = '<button type="button" class="cy-menu-use">⛓ use this path</button>';
         if (wrap) wrap.appendChild(menu);
-        // chain key (top-left live readout)
+        // chain key (bottom-left: the selected/pruned chain) + node key (top-left: hovered node)
         const ckey = document.createElement('div'); ckey.className = 'cy-chainkey'; ckey.style.display = 'none';
         if (wrap) wrap.appendChild(ckey);
+        const nkey = document.createElement('div'); nkey.className = 'cy-nodekey'; nkey.style.display = 'none';
+        if (wrap) wrap.appendChild(nkey);
+        // Keep the canvas sized to its container through fullscreen / expand / window
+        // resize — this is what stops the post-fullscreen horizontal stretch.
+        if (typeof ResizeObserver !== 'undefined') {
+          let rt; const ro = new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => { try { cy.resize(); } catch (e) {} }, 90); });
+          ro.observe(container);
+        }
         let menuTarget = null;
         const hideMenu = () => { menu.style.display = 'none'; menuTarget = null; };
         cy.on('tap', 'node', (e) => {
@@ -434,9 +450,9 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
           const chain = e.target.union(e.target.successors()).union(e.target.predecessors()).intersection(vis);
           vis.addClass('dim');
           chain.removeClass('dim').addClass('hl');
-          showChainKey(id, chain);
+          showNodeKey(id, e.target);
         });
-        cy.on('mouseout', 'node', () => { cy.elements().removeClass('dim hl'); hideChainKey(id); });
+        cy.on('mouseout', 'node', () => { cy.elements().removeClass('dim hl'); hideNodeKey(id); });
         if (wrap) wrap.querySelectorAll('.gc').forEach((btn) => btn.addEventListener('click', () => {
           const act = btn.dataset.act;
           const cx = container.clientWidth / 2, cyy = container.clientHeight / 2;
@@ -453,6 +469,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       cy.add(els);
       cy.scratch('_pruned', false);
       const saBtn = wrap && wrap.querySelector('[data-act=showall]'); if (saBtn) saBtn.style.display = 'none';
+      hideChainKey(id); hideNodeKey(id);
       cy.resize();
       lastRoots[id] = roots?.length ? roots : null;
       if (layoutIdx[id] === undefined) layoutIdx[id] = 0;

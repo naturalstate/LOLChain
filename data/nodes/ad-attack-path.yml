@@ -1,0 +1,26 @@
+id: ad-attack-path
+name: AD Attack-Path Abuse
+slug: ad-attack-path
+tier: advanced
+category: active-directory
+aliases: [attack-path, excessive-ad-rights, acl-path, bloodhound]
+summary: >
+  Excessive and nested Active Directory permissions create a chain of object-control
+  edges (GenericAll/GenericWrite, WriteDacl, Owns, AddMember, ForceChangePassword) from a
+  low-privileged account toward a privileged one. Mapping tools such as BloodHound reveal
+  the path; abusing one edge grants write control over the next object along it.
+requires:
+  - domain-credentials
+provides:
+  - ad-object-control
+detection: >
+  Mass LDAP/SAMR enumeration (directory collection); abuse of a discovered control edge;
+  ACL/membership changes on privileged objects.
+remediation: >
+  Prune excessive ACLs and nested group membership; tier administration; alert on
+  domain-wide directory collection; review and cut attack paths to Tier 0.
+mitre: [T1098]
+references:
+  - title: "MITRE ATT&CK — Account Manipulation (T1098)"
+    url: https://attack.mitre.org/techniques/T1098/
+chains: []

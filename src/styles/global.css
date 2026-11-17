@@ -336,14 +336,22 @@ a:hover { color: var(--text); }
 }
 .cy-menu button:hover { background: var(--accent); color: #0a0e14; }
 
-/* Chain key — live top-left readout of the hovered/selected chain */
+/* Node key (top-left: hovered node) + chain key (bottom-left: selected chain) */
+.cy-nodekey {
+  position: absolute; top: 8px; left: 8px; z-index: 4; max-width: 60%;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  background: rgba(10,14,20,0.92); border: 1px solid var(--border-strong); border-radius: 6px;
+  padding: 6px 10px; backdrop-filter: blur(2px); pointer-events: none;
+}
 .cy-chainkey {
-  position: absolute; top: 8px; left: 8px; z-index: 4; max-width: 64%;
-  font-family: var(--mono); font-size: 11px; line-height: 1.6;
+  position: absolute; bottom: 8px; left: 8px; right: 8px; z-index: 4;
+  font-family: var(--mono); font-size: 11px; line-height: 1.5;
   background: rgba(10,14,20,0.92); border: 1px solid var(--border-strong); border-radius: 6px;
   padding: 7px 10px; backdrop-filter: blur(2px); pointer-events: none;
+  white-space: nowrap; overflow-x: auto; scrollbar-width: none;
 }
-.cy-chainkey .ck-node { font-weight: 600; }
+.cy-chainkey::-webkit-scrollbar { display: none; }
+.cy-nodekey .ck-node, .cy-chainkey .ck-node { font-weight: 600; }
 .cy-chainkey .ck-sep { color: var(--text-dim); margin: 0 5px; }
 .gc.gc-showall { color: var(--accent); border-color: var(--accent); }
 
