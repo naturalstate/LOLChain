@@ -48,6 +48,18 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       <div class="mode-layout">
         <aside class="controls">
           <div class="control-group">
+            <div class="ghead"><span class="label">Start posture</span></div>
+            <div class="posture-pick">
+              <button class="posture sel" type="button" data-caps="">Unauthenticated external</button>
+              <button class="posture" type="button" data-caps="internal-network-reach">Network foothold</button>
+              <button class="posture" type="button" data-caps="domain-credentials">Assumed breach — domain user</button>
+              <button class="posture" type="button" data-caps="priv-esc,os-command-exec">Assumed breach — local admin</button>
+              <button class="posture" type="button" data-caps="cloud-credentials">Assumed breach — low-priv cloud</button>
+            </div>
+            <label class="privesc-toggle"><input type="checkbox" id="f-privesc" /> <span>Privilege-escalation only</span></label>
+            <p class="control-hint">Postures seed the capabilities an assumed-breach test starts with. “Privilege-escalation only” filters results to the escalation steps (priv-esc, domain / cluster admin).</p>
+          </div>
+          <div class="control-group">
             <div class="ghead"><span class="label">Start from a vuln</span></div>
             <select id="f-node">
               <option value="">— none —</option>
@@ -357,7 +369,8 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     }
 
     // --- forward mode ---
-    const fState = { node: '', caps: new Set() };
+    const PRIVESC_GOALS = new Set(['privilege-escalation', 'domain-admin', 'cluster-admin']);
+    const fState = { node: '', caps: new Set(), privescOnly: false };
     function renderForward() {
       const summary = document.getElementById('f-summary');
       const goalsEl = document.getElementById('f-goals');
@@ -367,9 +380,16 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         drawGraph('f-graph', [], []); return;
       }
       const out = forwardReach(graph, { startNodes: fState.node ? [fState.node] : [], startCaps: [...fState.caps] });
-      const label = fState.node ? nodeMeta[fState.node].name : [...fState.caps].map((c) => capLabel[c]).join(' + ');
-      const uGoals = [...new Set(out.goalsReached.map((g) => g.goal))];
-      summary.innerHTML = `From <b>${esc(label)}</b> you can reach <b>${out.activated.length}</b> vuln(s) and <b>${uGoals.length}</b> goal(s).`;
+      const label = fState.node ? nodeMeta[fState.node].name : ([...fState.caps].map((c) => capLabel[c]).join(' + ') || 'an unauthenticated start');
+      let uGoals = [...new Set(out.goalsReached.map((g) => g.goal))];
+      // Privilege-escalation-only: keep just the escalation end-states and the nodes that reach them.
+      const escList = fState.privescOnly
+        ? out.activated.filter((r) => (nodeMeta[r.slug].achieves ?? []).some((g) => PRIVESC_GOALS.has(g)))
+        : out.activated;
+      if (fState.privescOnly) uGoals = uGoals.filter((g) => PRIVESC_GOALS.has(g));
+      summary.innerHTML = fState.privescOnly
+        ? `From <b>${esc(label)}</b>: <b>${escList.length}</b> privilege-escalation step(s), reaching <b>${uGoals.length}</b> escalation goal(s).`
+        : `From <b>${esc(label)}</b> you can reach <b>${out.activated.length}</b> vuln(s) and <b>${uGoals.length}</b> goal(s).`;
       goalsEl.innerHTML = uGoals.map((g) => `<span class="chip goal">${esc(goalLabel[g] ?? g)}</span>`).join('');
 
       // graph
@@ -395,8 +415,9 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       drawGraph('f-graph', gels, [fState.node || rootId]);
 
       if (!out.activated.length) { results.innerHTML = '<div class="q-empty">Terminal node — nothing chains onward.</div>'; return; }
+      if (!escList.length) { results.innerHTML = '<div class="q-empty">No privilege-escalation step from this start. Turn off “privilege-escalation only” to see every reachable chain.</div>'; return; }
       const byDepth = {};
-      for (const r of out.activated) (byDepth[r.depth] ??= []).push(r);
+      for (const r of escList) (byDepth[r.depth] ??= []).push(r);
       let html = '';
       for (const d of Object.keys(byDepth).sort((a, b) => a - b)) {
         html += `<div class="hopgroup"><div class="hophead">Hop ${d}</div>`;
@@ -521,15 +542,33 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         if (cy && cy.elements().length) { cy.resize(); cy.fit(undefined, 24); }
       }));
 
+      const syncCapPicks = () => document.querySelectorAll('#panel-forward .pick').forEach((b) =>
+        b.classList.toggle('sel', fState.caps.has(b.dataset.cap)));
+
       document.getElementById('f-node').addEventListener('change', (e) => { fState.node = e.target.value; renderForward(); });
       document.querySelectorAll('#panel-forward .pick').forEach((b) => b.addEventListener('click', () => {
         const c = b.dataset.cap;
         if (fState.caps.has(c)) { fState.caps.delete(c); b.classList.remove('sel'); } else { fState.caps.add(c); b.classList.add('sel'); }
+        document.querySelectorAll('#panel-forward .posture').forEach((p) => p.classList.remove('sel'));
         renderForward();
       }));
+      // Start posture: seed an assume-breach capability bundle, clear any node start.
+      document.querySelectorAll('#panel-forward .posture').forEach((b) => b.addEventListener('click', () => {
+        document.querySelectorAll('#panel-forward .posture').forEach((p) => p.classList.remove('sel'));
+        b.classList.add('sel');
+        fState.node = ''; document.getElementById('f-node').value = '';
+        fState.caps = new Set((b.dataset.caps || '').split(',').filter(Boolean));
+        syncCapPicks();
+        renderForward();
+      }));
+      document.getElementById('f-privesc').addEventListener('change', (e) => { fState.privescOnly = e.target.checked; renderForward(); });
       document.getElementById('f-reset').addEventListener('click', () => {
-        fState.node = ''; fState.caps.clear(); document.getElementById('f-node').value = '';
-        document.querySelectorAll('#panel-forward .pick.sel').forEach((b) => b.classList.remove('sel')); renderForward();
+        fState.node = ''; fState.caps.clear(); fState.privescOnly = false;
+        document.getElementById('f-node').value = '';
+        document.getElementById('f-privesc').checked = false;
+        document.querySelectorAll('#panel-forward .pick.sel').forEach((b) => b.classList.remove('sel'));
+        document.querySelectorAll('#panel-forward .posture').forEach((p, i) => p.classList.toggle('sel', i === 0));
+        renderForward();
       });
 
       document.getElementById('g-node').addEventListener('change', (e) => { gState.node = e.target.value; syncGoalAvail(); renderGoal(); });
