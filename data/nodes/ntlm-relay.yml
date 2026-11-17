@@ -1,0 +1,30 @@
+id: ntlm-relay
+name: NTLM Relay
+slug: ntlm-relay
+tier: advanced
+category: active-directory
+aliases: [ntlmrelayx, smb-relay, ldap-relay, relay]
+summary: >
+  Relay a captured or coerced NetNTLM authentication to another service without cracking
+  it. Relayed to LDAP it grants write control over AD objects (and RBCD on computers);
+  relayed to AD CS (ESC8) it yields a certificate; relayed to SMB it runs code.
+requires:
+  - netntlm-hash
+  - coerced-auth
+provides:
+  - ad-object-control
+  - machine-account-control
+  - lateral-movement
+detection: >
+  Authentication arriving at a service from a host that did not initiate it; LDAP writes
+  or RBCD changes after relay; ntlmrelayx signatures; AD CS enrolment from relayed auth.
+remediation: >
+  Enforce SMB signing, LDAP channel binding and signing, and EPA on AD CS web endpoints;
+  disable NTLM where possible; mitigate coercion so there is nothing to relay.
+mitre: [T1557.001]
+references:
+  - title: "MITRE ATT&CK — LLMNR/NBT-NS Poisoning and SMB Relay (T1557.001)"
+    url: https://attack.mitre.org/techniques/T1557/001/
+  - title: "The Hacker Recipes — NTLM relay"
+    url: https://www.thehacker.recipes/ad/movement/ntlm/relay
+chains: []

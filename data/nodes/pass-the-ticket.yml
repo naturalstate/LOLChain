@@ -1,0 +1,26 @@
+id: pass-the-ticket
+name: Pass-the-Ticket
+slug: pass-the-ticket
+tier: advanced
+category: active-directory
+aliases: [ptt, kerberos-ticket-reuse]
+summary: >
+  Inject a stolen or forged Kerberos ticket (TGT or service ticket) into a logon session
+  and act as that principal. Reuses tickets from delegation abuse, ticket theft, or
+  forging to move laterally and reach privileged services.
+requires:
+  - kerberos-tgt
+provides:
+  - lateral-movement
+  - domain-credentials
+detection: >
+  Tickets used from a host that did not request them; TGTs with anomalous lifetimes;
+  encryption-type downgrades; mismatched account/host in 4769/4624 events.
+remediation: >
+  Protected Users and tiering; short ticket lifetimes; monitor for ticket reuse and
+  forged-ticket indicators; rotate krbtgt twice if compromise suspected.
+mitre: [T1550.003]
+references:
+  - title: "MITRE ATT&CK — Use Alternate Authentication Material: Pass the Ticket (T1550.003)"
+    url: https://attack.mitre.org/techniques/T1550/003/
+chains: []

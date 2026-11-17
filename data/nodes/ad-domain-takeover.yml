@@ -2,7 +2,7 @@ id: ad-domain-takeover
 name: Active Directory Domain Takeover
 slug: ad-domain-takeover
 tier: expert
-category: network
+category: active-directory
 aliases: [domain-admin, ad-takeover, da]
 summary: >
   Harvested domain credentials are escalated through AD misconfigurations

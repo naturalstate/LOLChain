@@ -1,0 +1,35 @@
+id: adcs-domain-escalation
+name: AD CS Escalation (ESC1–ESC8)
+slug: adcs-domain-escalation
+tier: expert
+category: active-directory
+aliases: [adcs, esc1, esc8, certifried, certipy, certified-pre-owned]
+summary: >
+  Abuse Active Directory Certificate Services misconfigurations: an over-permissive
+  template that allows a requester-supplied SAN (ESC1) lets a low-priv user enrol a
+  certificate as a Domain Admin; an unsigned web-enrolment endpoint (ESC8) accepts a
+  relayed DC authentication. The certificate then yields the account's TGT or NT hash.
+requires:
+  - domain-credentials
+  - ad-object-control
+provides:
+  - nt-hash
+  - kerberos-tgt
+achieves:
+  - privilege-escalation
+  - domain-admin
+detection: >
+  Certificate enrolments with an attacker-supplied SAN; enrolment for privileged accounts;
+  relayed auth to the AD CS web endpoint; Certify/Certipy tooling; abnormal template use.
+remediation: >
+  Remove ENROLLEE_SUPPLIES_SUBJECT and manager-approval bypass from templates; lock down
+  enrolment rights; enable EPA/HTTPS on web enrolment; audit CA and template ACLs.
+mitre: [T1649]
+references:
+  - title: "MITRE ATT&CK — Steal or Forge Authentication Certificates (T1649)"
+    url: https://attack.mitre.org/techniques/T1649/
+  - title: "The Hacker Recipes — Certificate Services (AD CS)"
+    url: https://www.thehacker.recipes/ad/movement/adcs
+  - title: "SpecterOps — Certified Pre-Owned"
+    url: https://specterops.io/assets/resources/Certified_Pre-Owned.pdf
+chains: []

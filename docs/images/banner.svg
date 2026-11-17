@@ -55,10 +55,10 @@
 
   <!-- stats -->
   <text x="58" y="352" font-family="'SFMono-Regular', ui-monospace, Consolas, monospace" font-size="15">
-    <tspan fill="#e4e8f0" font-weight="700">80</tspan><tspan fill="#5b6374"> vulns</tspan>
-    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">68</tspan><tspan fill="#5b6374"> chains</tspan>
-    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">262</tspan><tspan fill="#5b6374"> derived</tspan>
-    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">8</tspan><tspan fill="#5b6374"> categories</tspan>
+    <tspan fill="#e4e8f0" font-weight="700">92</tspan><tspan fill="#5b6374"> vulns</tspan>
+    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">69</tspan><tspan fill="#5b6374"> chains</tspan>
+    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">334</tspan><tspan fill="#5b6374"> derived</tspan>
+    <tspan fill="#5b6374">  ·  </tspan><tspan fill="#e4e8f0" font-weight="700">9</tspan><tspan fill="#5b6374"> categories</tspan>
   </text>
 
   <!-- ============ RIGHT COLUMN: chain path card ============ -->

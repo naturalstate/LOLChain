@@ -188,3 +188,32 @@ capabilities:
     group: movement
     label: Domain credentials
     description: Active Directory credentials usable for further movement.
+  # --- Identity / Active Directory handoffs ---
+  - slug: netntlm-hash
+    group: movement
+    label: NetNTLM hash captured
+    description: NetNTLMv1/v2 challenge-response captured (to relay or crack).
+  - slug: coerced-auth
+    group: movement
+    label: Coerced machine authentication
+    description: Forced a machine/account to authenticate to an attacker-controlled host.
+  - slug: nt-hash
+    group: movement
+    label: NT hash
+    description: NT hash of a user or machine account (pass-the-hash, crack, or PKINIT).
+  - slug: kerberos-tgt
+    group: movement
+    label: Kerberos TGT
+    description: A usable ticket-granting ticket (pass-the-ticket / delegation / S4U).
+  - slug: ad-object-control
+    group: movement
+    label: Control over an AD object
+    description: Write-level control (GenericAll/Write, WriteDacl, Owns) over a principal.
+  - slug: machine-account-control
+    group: movement
+    label: Control over a computer object
+    description: Write over a computer account (RBCD, shadow credentials, add-computer).
+  - slug: dcsync-rights
+    group: movement
+    label: DCSync rights
+    description: GetChanges + GetChangesAll on the domain (directory replication).

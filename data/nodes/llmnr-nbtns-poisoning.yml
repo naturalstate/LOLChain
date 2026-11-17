@@ -1,0 +1,26 @@
+id: llmnr-nbtns-poisoning
+name: LLMNR / NBT-NS / mDNS Poisoning
+slug: llmnr-nbtns-poisoning
+tier: advanced
+category: active-directory
+aliases: [llmnr-poisoning, responder, nbtns-spoof, name-poisoning]
+summary: >
+  On an internal network, failed DNS lookups fall back to broadcast name resolution
+  (LLMNR, NBT-NS, mDNS). An attacker answers those queries and captures the victim's
+  NetNTLM challenge-response — material to relay or crack. The classic first move with
+  no credentials.
+requires:
+  - internal-network-reach
+provides:
+  - netntlm-hash
+detection: >
+  Responder-style answers to LLMNR/NBT-NS broadcasts; one host replying authoritatively
+  to many name queries; NetNTLM auth to unexpected hosts.
+remediation: >
+  Disable LLMNR/NBT-NS/mDNS via GPO; segment broadcast domains; require SMB signing;
+  monitor for rogue responders.
+mitre: [T1557.001]
+references:
+  - title: "MITRE ATT&CK — LLMNR/NBT-NS Poisoning and SMB Relay (T1557.001)"
+    url: https://attack.mitre.org/techniques/T1557/001/
+chains: []

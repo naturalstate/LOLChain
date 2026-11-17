@@ -11,7 +11,7 @@
     "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
     "tier": { "enum": ["basic", "advanced", "expert"] },
     "category": {
-      "enum": ["web", "cloud", "kubernetes", "cicd", "llm", "mobile", "network", "host"]
+      "enum": ["web", "cloud", "kubernetes", "cicd", "llm", "mobile", "network", "host", "active-directory"]
     },
     "aliases": { "type": "array", "items": { "type": "string" } },
     "summary": { "type": "string", "minLength": 10 },

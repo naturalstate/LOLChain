@@ -1,0 +1,26 @@
+id: bloodhound-acl-path
+name: BloodHound ACL Path
+slug: bloodhound-acl-path
+tier: advanced
+category: active-directory
+aliases: [bloodhound, acl-path, attack-path, generic-all]
+summary: >
+  From any authenticated domain user, map the directory with BloodHound and find an
+  object-control edge (GenericAll/GenericWrite, WriteDacl, Owns, AddMember,
+  ForceChangePassword) leading toward a privileged principal — turning "a valid account"
+  into write control over a target object.
+requires:
+  - domain-credentials
+provides:
+  - ad-object-control
+detection: >
+  Mass LDAP/SAMR enumeration (SharpHound); directory reads of ACLs across the domain
+  from a single principal; subsequent abuse of a discovered edge.
+remediation: >
+  Prune excessive ACLs and nested group membership; tier administration; alert on
+  domain-wide directory collection; review BloodHound paths to Tier 0 and cut them.
+mitre: [T1098]
+references:
+  - title: "MITRE ATT&CK — Account Manipulation (T1098)"
+    url: https://attack.mitre.org/techniques/T1098/
+chains: []

@@ -1,0 +1,29 @@
+id: acl-abuse
+name: AD ACL Abuse
+slug: acl-abuse
+tier: advanced
+category: active-directory
+aliases: [dacl-abuse, writedacl, genericall, forcechangepassword, addmember]
+summary: >
+  Exercise write control over an AD object: reset a target's password (ForceChangePassword),
+  add yourself to a privileged group (AddMember), grant yourself rights (WriteDacl), or take
+  ownership (Owns). Chained over a BloodHound path this walks control toward Tier 0 — and
+  WriteDacl on the domain head grants DCSync.
+requires:
+  - ad-object-control
+provides:
+  - domain-credentials
+  - dcsync-rights
+achieves:
+  - privilege-escalation
+detection: >
+  ACL/owner changes on directory objects (event 5136); password resets by non-admins;
+  privileged-group membership changes; new GetChanges/GetChangesAll grants on the domain.
+remediation: >
+  Least-privilege ACLs; protect Tier 0 with AdminSDHolder and restricted ownership; alert
+  on DACL and privileged-group changes; remove dangerous nested rights.
+mitre: [T1098, T1222]
+references:
+  - title: "MITRE ATT&CK — Account Manipulation (T1098)"
+    url: https://attack.mitre.org/techniques/T1098/
+chains: []

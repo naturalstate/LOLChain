@@ -1,0 +1,26 @@
+id: pass-the-hash
+name: Pass-the-Hash
+slug: pass-the-hash
+tier: advanced
+category: active-directory
+aliases: [pth, ntlm-pth, overpass-the-hash]
+summary: >
+  Authenticate with an account's NT hash directly — no plaintext needed — over NTLM, or
+  convert it to a Kerberos TGT (overpass-the-hash). Reuses dumped or recovered hashes to
+  log into other hosts and pivot across the domain.
+requires:
+  - nt-hash
+provides:
+  - lateral-movement
+  - domain-credentials
+detection: >
+  NTLM logons for accounts that normally use Kerberos; same account on many hosts in
+  quick succession; logon type/host anomalies; tooling signatures (Mimikatz sekurlsa).
+remediation: >
+  Credential Guard; unique local admin passwords (LAPS); Protected Users and tiering to
+  limit where privileged hashes land; restrict lateral SMB/WMI/RDP.
+mitre: [T1550.002]
+references:
+  - title: "MITRE ATT&CK — Use Alternate Authentication Material: Pass the Hash (T1550.002)"
+    url: https://attack.mitre.org/techniques/T1550/002/
+chains: []

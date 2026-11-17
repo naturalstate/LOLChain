@@ -1,0 +1,30 @@
+id: kerberos-delegation-abuse
+name: Kerberos Delegation Abuse
+slug: kerberos-delegation-abuse
+tier: expert
+category: active-directory
+aliases: [unconstrained-delegation, constrained-delegation, rbcd, s4u]
+summary: >
+  Abuse Kerberos delegation to impersonate privileged users. Unconstrained delegation
+  captures TGTs of anyone who authenticates; constrained/RBCD use S4U2Self+S4U2Proxy to
+  mint tickets to a target service as any user — including Domain Admins.
+requires:
+  - machine-account-control
+  - domain-credentials
+provides:
+  - kerberos-tgt
+achieves:
+  - privilege-escalation
+detection: >
+  Accounts/computers flagged for delegation; S4U2Self/S4U2Proxy ticket requests (4769)
+  for privileged users; msDS-AllowedToActOnBehalfOfOtherIdentity changes (RBCD).
+remediation: >
+  Avoid unconstrained delegation; mark Tier 0 accounts "sensitive, cannot be delegated"
+  and add to Protected Users; restrict who can configure delegation; monitor S4U.
+mitre: [T1558, T1550.003]
+references:
+  - title: "MITRE ATT&CK — Steal or Forge Kerberos Tickets (T1558)"
+    url: https://attack.mitre.org/techniques/T1558/
+  - title: "The Hacker Recipes — Kerberos delegations"
+    url: https://www.thehacker.recipes/ad/movement/kerberos/delegations
+chains: []

@@ -1,0 +1,27 @@
+id: coerce-auth
+name: Authentication Coercion (PetitPotam / PrinterBug)
+slug: coerce-auth
+tier: advanced
+category: active-directory
+aliases: [petitpotam, printerbug, dfscoerce, coercion, forced-auth]
+summary: >
+  Abuse an RPC method (MS-EFSR/PetitPotam, MS-RPRN/PrinterBug, MS-DFSNM/DFSCoerce) to
+  force a machine — often a Domain Controller — to authenticate to an attacker host.
+  Combined with relay, machine-account authentication becomes object/computer control.
+requires:
+  - internal-network-reach
+provides:
+  - coerced-auth
+detection: >
+  Unexpected EFSRPC/RPRN/DFSNM calls to DCs; machine accounts authenticating to
+  non-infrastructure hosts; spikes in machine-account Kerberos/NTLM from one source.
+remediation: >
+  Patch; disable unneeded spooler/EFS RPC; enforce SMB signing and EPA/LDAP channel
+  binding so coerced auth cannot be relayed; restrict RPC exposure.
+mitre: [T1187]
+references:
+  - title: "MITRE ATT&CK — Forced Authentication (T1187)"
+    url: https://attack.mitre.org/techniques/T1187/
+  - title: "The Hacker Recipes — MITM and coerced authentications"
+    url: https://www.thehacker.recipes/ad/movement/mitm-and-coerced-authentications
+chains: []

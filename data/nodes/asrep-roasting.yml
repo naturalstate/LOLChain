@@ -1,0 +1,27 @@
+id: asrep-roasting
+name: AS-REP Roasting
+slug: asrep-roasting
+tier: advanced
+category: active-directory
+aliases: [asreproast, as-rep-roast, dont-require-preauth]
+summary: >
+  Accounts with Kerberos pre-authentication disabled will return an AS-REP encrypted with
+  the account's password hash to any requester. Capture it and crack offline — no prior
+  credentials needed beyond a username list, or any domain user to enumerate targets.
+requires:
+  - domain-credentials
+provides:
+  - domain-credentials
+achieves:
+  - privilege-escalation
+detection: >
+  AS-REQ without pre-auth (event 4768) for multiple accounts; AS-REP requests with RC4;
+  accounts flagged DONT_REQUIRE_PREAUTH; offline-cracked accounts logging in anew.
+remediation: >
+  Require Kerberos pre-authentication on all accounts; strong passwords; AES-only;
+  alert on pre-auth-disabled accounts and anomalous AS-REQ volume.
+mitre: [T1558.004]
+references:
+  - title: "MITRE ATT&CK — AS-REP Roasting (T1558.004)"
+    url: https://attack.mitre.org/techniques/T1558/004/
+chains: []

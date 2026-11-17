@@ -2,7 +2,7 @@ id: ad-kerberoasting
 name: Kerberoasting
 slug: ad-kerberoasting
 tier: advanced
-category: network
+category: active-directory
 aliases: [kerberoast, as-rep-roast, spn-roast]
 summary: >
   Any authenticated domain user can request Kerberos service tickets (TGS) for accounts

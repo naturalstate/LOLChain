@@ -1,0 +1,35 @@
+id: dcsync
+name: DCSync
+slug: dcsync
+tier: expert
+category: active-directory
+aliases: [dcsync, drsuapi, replication-abuse, krbtgt-dump]
+summary: >
+  With directory-replication rights (GetChanges + GetChangesAll), impersonate a Domain
+  Controller and ask a real DC to replicate secrets — pulling any account's NT hash,
+  including krbtgt. The krbtgt hash enables Golden Tickets and effectively ends the domain.
+requires:
+  - dcsync-rights
+provides:
+  - nt-hash
+achieves:
+  - domain-admin
+detection: >
+  DRSUAPI GetNCChanges / replication requests from a host that is not a Domain Controller;
+  GetChanges/GetChangesAll grants to non-DC principals; Mimikatz lsadump::dcsync.
+remediation: >
+  Restrict replication rights to DCs; alert on replication from non-DC sources; protect
+  Tier 0; rotate krbtgt twice if compromise is suspected.
+mitre: [T1003.006]
+references:
+  - title: "MITRE ATT&CK — OS Credential Dumping: DCSync (T1003.006)"
+    url: https://attack.mitre.org/techniques/T1003/006/
+  - title: "BloodHound — DCSync edge"
+    url: https://bloodhound.specterops.io/resources/edges/dc-sync
+chains:
+  - to: ad-domain-takeover
+    via: [nt-hash]
+    outcome: Dump the krbtgt hash to forge Golden Tickets for persistent domain control.
+    tier: expert
+    difficulty: hard
+    documented: false

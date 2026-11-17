@@ -4,7 +4,7 @@
 
 <p align="center">
   <b><a href="https://naturalstate.github.io/LOLChain/">🔗 Live site</a></b>
-  &nbsp;·&nbsp; 80 vulns &nbsp;·&nbsp; 68 curated chains &nbsp;·&nbsp; 262 derived candidates &nbsp;·&nbsp; 8 categories
+  &nbsp;·&nbsp; 92 vulns &nbsp;·&nbsp; 69 curated chains &nbsp;·&nbsp; 334 derived candidates &nbsp;·&nbsp; 9 categories
 </p>
 
 ---
@@ -81,7 +81,7 @@ Chains are tiered by sophistication, and every edge is one of two kinds:
 
 ## Categories &amp; example chains
 
-LolChain spans **8 categories**. One representative chain from each (`A —[capability]→ B`):
+LolChain spans **9 categories**. One representative chain from each (`A —[capability]→ B`):
 
 ### 🔵 web
 The classic surface — injection, auth, and client-side flaws.
@@ -133,6 +133,14 @@ The post-RCE ground truth of any pentest: a shell is not root — local privesc 
 ```
 Webshell —[os-command-exec]→ SUID Binary Abuse  ⇒  privilege escalation
 Webshell —[os-command-exec]→ SeImpersonate → SYSTEM —[priv-esc]→ Credential Dumping —[domain-credentials]→ AD Domain Takeover  ⇒  domain admin
+```
+
+### 🩷 active-directory
+The assume-breach core: valid domain creds walk to Domain Admin through BloodHound edges.
+```
+LLMNR Poisoning —[netntlm-hash]→ NTLM Relay —[ad-object-control]→ ACL Abuse —[dcsync-rights]→ DCSync  ⇒  domain admin
+Coerce Auth (PetitPotam) —[coerced-auth]→ NTLM Relay —[machine-account-control]→ Shadow Credentials —[nt-hash]→ Pass-the-Hash  ⇒  lateral movement
+Domain User —[domain-credentials]→ AD CS Escalation (ESC1)  ⇒  domain admin
 ```
 
 ## The vocabulary
@@ -259,7 +267,7 @@ docs/images/              # README graphics
 ## Status
 
 - [x] **Phase 0** — pipeline skeleton (schema, vocab, seed nodes, build, filterable UI).
-- [x] **Phase 1** — dataset (80 vulns, 68 curated chains, 8 categories).
+- [x] **Phase 1** — dataset (92 vulns, 69 curated chains, 9 categories).
 - [x] **Phase 2** — "I have X" forward query + facets + per-node pages.
 - [x] **Phase 3** — goal-directed + constrained + backward pathfinding; derived chains.
 - [x] **Phase 4** — interactive graph visualization (Cytoscape).
