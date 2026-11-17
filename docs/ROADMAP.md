@@ -33,11 +33,15 @@ node info and chain control.
 - Clarified behaviour: "start from a vuln" + "capabilities" **combine** (union),
   they are not exclusive.
 
-## Phase 3 — "Simple" search-drill-down subtab
+## Phase 3 — "Simple" search-drill-down subtab ✅ (done 2026-11-17)
 
-New subtab after "I want X": one large search-engine-style input, dynamic
-results, asks a filtering question only when needed, minimal output, interactive
-drill-down.
+New "Simple" tab: one large search-engine-style input over all 92 vulns, 11
+goals, and every capability. Live ranked results; "narrow to" type chips appear
+only when the top matches span kinds; "I want…" biases goals, "I have…" biases
+capabilities. Clicking a result drills down — a goal lists what achieves it
+directly vs. through a chain; a node shows ↑reached-by / ↓leads-to (clickable to
+keep walking) plus requires/provides/reaches; a breadcrumb trail returns to
+search. Map-only controls (viewbar/legend/scope) hide on this tab.
 
 ## Phase 4 — View styles
 

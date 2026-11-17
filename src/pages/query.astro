@@ -18,6 +18,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       <button class="tab active" data-tab="forward">I have X</button>
       <button class="tab" data-tab="goal">X → goal Z</button>
       <button class="tab" data-tab="backward">I want Z</button>
+      <button class="tab" data-tab="simple">Simple</button>
     </div>
 
     <div class="q-viewbar">
@@ -175,6 +176,22 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
           </div>
           <div id="b-results"></div>
         </section>
+      </div>
+    </div>
+
+    <!-- SIMPLE (search + drill-down) -->
+    <div class="panel" id="panel-simple">
+      <div class="simple-wrap">
+        <div class="simple-box">
+          <span class="simple-ico">⌕</span>
+          <input type="search" id="s-input" class="simple-search" autocomplete="off"
+            placeholder="Search a vuln, capability, or goal — try “rce”, “domain admin”, “ssrf”…" />
+        </div>
+        <div class="simple-clarify" id="s-clarify" hidden></div>
+        <div class="simple-crumbs" id="s-crumbs" hidden></div>
+        <div class="simple-results" id="s-results">
+          <div class="simple-hint">Type to search 92 techniques, 11 goals, and every capability hand-off. Click a result to drill into what reaches it and where it leads.</div>
+        </div>
       </div>
     </div>
   </div>
@@ -766,6 +783,137 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       results.querySelectorAll('[data-focus]').forEach((el) => el.addEventListener('click', () => focusNode('b-graph', el.dataset.focus)));
     }
 
+    // --- simple mode (one search box -> ranked results -> drill-down) ---
+    const simpleState = { trail: [], typeFilter: null, lastQuery: '' };
+    let simpleIndex = [], succMap = {}, predMap = {};
+    const KIND_LABEL = { node: 'vulns', goal: 'goals', cap: 'capabilities' };
+    const KIND_TAG = { node: 'vuln', goal: 'goal', cap: 'capability' };
+    const SIMPLE_HINT = '<div class="simple-hint">Type to search 92 techniques, 11 goals, and every capability hand-off. Click a result to drill into what reaches it and where it leads.</div>';
+
+    function buildSimpleIndex() {
+      simpleIndex = [];
+      for (const n of graph.nodes) simpleIndex.push({ kind: 'node', slug: n.slug, label: n.name, cat: n.category, tier: n.tier,
+        hay: [n.name, ...(n.aliases ?? []), n.category, n.os ?? '', n.summary ?? ''].join(' ').toLowerCase() });
+      for (const g of graph.goals) simpleIndex.push({ kind: 'goal', slug: g.slug, label: g.label, hay: [g.label, g.description ?? '', g.slug].join(' ').toLowerCase() });
+      for (const c of graph.capabilities) simpleIndex.push({ kind: 'cap', slug: c.slug, label: c.label, hay: [c.label, c.description ?? '', c.slug].join(' ').toLowerCase() });
+      succMap = {}; predMap = {};
+      for (const e of graph.edges) {
+        (succMap[e.from] ??= []).push({ slug: e.to, via: e.via, type: e.type });
+        (predMap[e.to] ??= []).push({ slug: e.from, via: e.via, type: e.type });
+      }
+    }
+    function scoreEntry(entry, q) {
+      const label = entry.label.toLowerCase();
+      if (label === q) return 100;
+      if (label.startsWith(q)) return 80;
+      if (new RegExp('\\b' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(label)) return 60;
+      if (label.includes(q)) return 45;
+      if (entry.hay.includes(q)) return 25;
+      return 0;
+    }
+    function runSimpleSearch(raw) {
+      const clarify = document.getElementById('s-clarify');
+      const crumbs = document.getElementById('s-crumbs');
+      const results = document.getElementById('s-results');
+      simpleState.trail = []; crumbs.hidden = true; simpleState.lastQuery = raw;
+      let q = (raw ?? '').trim().toLowerCase();
+      if (!q) { clarify.hidden = true; results.innerHTML = SIMPLE_HINT; return; }
+      // Light intent parsing: "I want X" biases goals, "I have X" biases capabilities.
+      let boost = null;
+      if (/^i? ?want /.test(q)) { boost = 'goal'; q = q.replace(/^i? ?want /, '').trim(); }
+      else if (/^i? ?have /.test(q)) { boost = 'cap'; q = q.replace(/^i? ?have /, '').trim(); }
+      if (!q) { clarify.hidden = true; results.innerHTML = SIMPLE_HINT; return; }
+      let scored = simpleIndex.map((e) => ({ e, s: scoreEntry(e, q) + (boost === e.kind ? 15 : 0) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
+      if (simpleState.typeFilter) scored = scored.filter((x) => x.e.kind === simpleState.typeFilter);
+      // "Ask only when needed": offer type chips only when the top matches span kinds.
+      const kinds = [...new Set(scored.slice(0, 20).map((x) => x.e.kind))];
+      if (simpleState.typeFilter) {
+        clarify.hidden = false;
+        clarify.innerHTML = `<span class="sc-q">Showing ${KIND_LABEL[simpleState.typeFilter]} only</span><button type="button" class="sc-chip sc-clear">clear ✕</button>`;
+        clarify.querySelector('.sc-clear').addEventListener('click', () => { simpleState.typeFilter = null; runSimpleSearch(raw); });
+      } else if (kinds.length > 1) {
+        clarify.hidden = false;
+        clarify.innerHTML = '<span class="sc-q">Narrow to:</span>' + kinds.map((k) => `<button type="button" class="sc-chip" data-k="${k}">${KIND_LABEL[k]}</button>`).join('');
+        clarify.querySelectorAll('.sc-chip').forEach((b) => b.addEventListener('click', () => { simpleState.typeFilter = b.dataset.k; runSimpleSearch(raw); }));
+      } else { clarify.hidden = true; }
+      if (!scored.length) { results.innerHTML = '<div class="simple-empty">No match. Try a vuln name, a capability, or a goal.</div>'; return; }
+      results.innerHTML = scored.slice(0, 12).map((x) => resultRow(x.e)).join('');
+      results.querySelectorAll('.sr-row').forEach((b) => b.addEventListener('click', () => {
+        if (b.dataset.kind === 'node') drillNode(b.dataset.slug, true); else drillCapGoal(b.dataset.kind, b.dataset.slug);
+      }));
+    }
+    function resultRow(e) {
+      const meta = e.kind === 'node'
+        ? `<span class="sr-cat" style="color:${CAT_COLOR[e.cat] ?? '#8a93a6'}">${esc(e.cat)}</span><span class="chip tier-${esc(e.tier)}">${esc(e.tier)}</span>`
+        : '';
+      return `<button type="button" class="sr-row" data-kind="${e.kind}" data-slug="${esc(e.slug)}"><span class="sr-kind k-${e.kind}">${KIND_TAG[e.kind]}</span><span class="sr-label">${esc(e.label)}</span>${meta}<span class="sr-go">›</span></button>`;
+    }
+    function stepButtons(arr) {
+      const real = (arr ?? []).filter((p) => nodeMeta[p.slug]);
+      if (!real.length) return '<span class="ni-none">—</span>';
+      return real.map((p) => {
+        const n = nodeMeta[p.slug];
+        const via = (p.via ?? []).map((v) => capLabel[v] ?? v).join(', ');
+        return `<button type="button" class="sd-step" data-slug="${esc(p.slug)}"><span class="sd-dot" style="background:${CAT_COLOR[n.category] ?? '#8a93a6'}"></span><span class="sd-sname">${esc(n.name)}</span>${via ? `<span class="sd-via">${esc(via)}</span>` : ''}</button>`;
+      }).join('');
+    }
+    function nodeMini(n) {
+      return `<button type="button" class="sd-step" data-slug="${esc(n.slug)}"><span class="sd-dot" style="background:${CAT_COLOR[n.category] ?? '#8a93a6'}"></span><span class="sd-sname">${esc(n.name)}</span><span class="sd-via">${esc(n.category)}</span></button>`;
+    }
+    function renderCrumbs(leadLabel) {
+      const crumbs = document.getElementById('s-crumbs');
+      const items = ['<button type="button" class="crumb home">⌕ back to search</button>'];
+      if (leadLabel) items.push(`<span class="crumb lead">${esc(leadLabel)}</span>`);
+      simpleState.trail.forEach((s, i) => items.push(`<button type="button" class="crumb" data-i="${i}">${esc(nodeMeta[s]?.name ?? s)}</button>`));
+      crumbs.hidden = items.length <= 1;
+      crumbs.innerHTML = items.join('<span class="crumb-sep">›</span>');
+      crumbs.querySelector('.home').addEventListener('click', () => { const el = document.getElementById('s-input'); el.focus(); runSimpleSearch(el.value); });
+      crumbs.querySelectorAll('.crumb[data-i]').forEach((b) => b.addEventListener('click', () => {
+        const i = +b.dataset.i, slug = simpleState.trail[i];
+        simpleState.trail = simpleState.trail.slice(0, i); drillNode(slug, false);
+      }));
+    }
+    function drillNode(slug, reset) {
+      const n = nodeMeta[slug]; if (!n) return;
+      if (reset) simpleState.trail = [];
+      if (simpleState.trail[simpleState.trail.length - 1] !== slug) simpleState.trail.push(slug);
+      renderCrumbs();
+      const chip = (arr, labeler, cls) => (arr && arr.length) ? arr.map((x) => `<span class="chip ${cls}">${esc(labeler(x))}</span>`).join('') : '<span class="ni-none">—</span>';
+      const goals = (n.reachGoals && n.reachGoals.length) ? n.reachGoals : (n.achieves ?? []);
+      document.getElementById('s-clarify').hidden = true;
+      document.getElementById('s-results').innerHTML =
+        `<div class="sd-card"><div class="sd-head"><span class="ni-dot" style="background:${CAT_COLOR[n.category] ?? '#8a93a6'}"></span>`
+        + `<span class="sd-name">${esc(n.name)}</span><span class="chip tier-${esc(n.tier)}">${esc(n.tier)}</span><span class="sr-cat">${esc(n.category)}</span>${n.os ? `<span class="sr-cat">${esc(n.os)}</span>` : ''}</div>`
+        + `<p class="sd-sum">${esc((n.summary ?? '').trim())}</p>`
+        + `<div class="sd-grid"><div class="sd-col"><div class="sd-lab">↑ reached by</div>${stepButtons(predMap[slug])}</div>`
+        + `<div class="sd-col"><div class="sd-lab">↓ leads to</div>${stepButtons(succMap[slug])}</div></div>`
+        + `<div class="sd-row"><span class="ni-lab">requires</span>${chip(n.requires, (c) => capLabel[c] ?? c, 'cap')}</div>`
+        + `<div class="sd-row"><span class="ni-lab">provides</span>${chip(n.provides, (c) => capLabel[c] ?? c, 'cap')}</div>`
+        + `<div class="sd-row"><span class="ni-lab">reaches</span>${chip(goals, (g) => goalLabel[g] ?? g, 'goal')}</div>`
+        + `<a class="ni-open" href="${BASE}node/${slug}/" target="_blank" rel="noopener">open full page ↗</a></div>`;
+      document.querySelectorAll('#s-results .sd-step').forEach((b) => b.addEventListener('click', () => drillNode(b.dataset.slug, false)));
+    }
+    function drillCapGoal(kind, slug) {
+      simpleState.trail = [];
+      renderCrumbs(kind === 'goal' ? goalLabel[slug] : capLabel[slug]);
+      document.getElementById('s-clarify').hidden = true;
+      let body = '';
+      if (kind === 'goal') {
+        const ach = graph.nodes.filter((n) => (n.achieves ?? []).includes(slug));
+        const reach = graph.nodes.filter((n) => !(n.achieves ?? []).includes(slug) && (n.reachGoals ?? []).includes(slug));
+        body = `<div class="sd-group"><div class="sd-lab">achieved directly by ${ach.length}</div>${ach.map(nodeMini).join('') || '<span class="ni-none">—</span>'}</div>`
+          + `<div class="sd-group"><div class="sd-lab">reaches it through a chain · ${reach.length}</div>${reach.slice(0, 24).map(nodeMini).join('') || '<span class="ni-none">—</span>'}</div>`;
+      } else {
+        const prov = graph.nodes.filter((n) => (n.provides ?? []).includes(slug));
+        const req = graph.nodes.filter((n) => (n.requires ?? []).includes(slug));
+        body = `<div class="sd-group"><div class="sd-lab">provided by ${prov.length}</div>${prov.map(nodeMini).join('') || '<span class="ni-none">—</span>'}</div>`
+          + `<div class="sd-group"><div class="sd-lab">required by ${req.length}</div>${req.map(nodeMini).join('') || '<span class="ni-none">—</span>'}</div>`;
+      }
+      document.getElementById('s-results').innerHTML =
+        `<div class="sd-card"><div class="sd-head"><span class="sr-kind k-${kind}">${KIND_TAG[kind]}</span><span class="sd-name">${esc(kind === 'goal' ? goalLabel[slug] : capLabel[slug])}</span></div>${body}</div>`;
+      document.querySelectorAll('#s-results .sd-step').forEach((b) => b.addEventListener('click', () => drillNode(b.dataset.slug, true)));
+    }
+
     // --- wiring ---
     function wire() {
       const wrapEl = document.getElementById('q-wrap');
@@ -790,11 +938,17 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         document.querySelectorAll('.panel').forEach((x) => x.classList.remove('active'));
         t.classList.add('active');
         document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+        // Simple mode has no map; hide the map-only controls (viewbar/legend/scope).
+        wrapEl.classList.toggle('simple-active', t.dataset.tab === 'simple');
+        if (t.dataset.tab === 'simple') { setTimeout(() => document.getElementById('s-input')?.focus(), 0); return; }
         // Cytoscape needs a resize+fit after its container becomes visible.
         const g = { forward: 'f-graph', goal: 'g-graph', backward: 'b-graph' }[t.dataset.tab];
         const cy = cyById[g];
         if (cy && cy.elements().length) { cy.resize(); cy.fit(undefined, 24); }
       }));
+
+      const sInput = document.getElementById('s-input');
+      if (sInput) { let sT; sInput.addEventListener('input', () => { clearTimeout(sT); sT = setTimeout(() => { simpleState.typeFilter = null; runSimpleSearch(sInput.value); }, 110); }); }
 
       const syncCapPicks = () => document.querySelectorAll('#panel-forward .pick').forEach((b) =>
         b.classList.toggle('sel', fState.caps.has(b.dataset.cap)));
@@ -865,6 +1019,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       goalLabel = Object.fromEntries(g.goals.map((x) => [x.slug, x.label]));
       nodeMeta = Object.fromEntries(g.nodes.map((n) => [n.slug, n]));
       buildDomainChips();
+      buildSimpleIndex();
       wire();
     });
   </script>
