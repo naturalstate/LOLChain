@@ -29,6 +29,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       <div class="view-toggle" id="style-toggle" title="How the chains are drawn">
         <button type="button" data-style="graph" class="on">Graph</button>
         <button type="button" data-style="flow">Flowchart</button>
+        <button type="button" data-style="text">Text</button>
       </div>
       <button type="button" class="vbtn" id="rail-toggle" title="Collapse the controls panel for a wider map">⟨ panel</button>
     </div>
@@ -111,6 +112,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
             </div>
             <div id="f-graph" class="graphbox"></div>
           </div>
+          <div class="text-view" id="f-textview" hidden></div>
           <div id="f-results"></div>
         </section>
       </div>
@@ -149,6 +151,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
             </div>
             <div id="g-graph" class="graphbox"></div>
           </div>
+          <div class="text-view" id="g-textview" hidden></div>
           <div id="g-results"></div>
         </section>
       </div>
@@ -178,6 +181,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
             </div>
             <div id="b-graph" class="graphbox"></div>
           </div>
+          <div class="text-view" id="b-textview" hidden></div>
           <div id="b-results"></div>
         </section>
       </div>
@@ -274,9 +278,44 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const flow = graphStyle === 'flow';
       cy.edges().style({ 'curve-style': flow ? 'taxi' : 'bezier', 'taxi-direction': 'downward', 'taxi-turn': '24px', 'taxi-turn-min-distance': '8px' });
     }
-    function applyGraphStyleAll() {
-      Object.keys(cyById).forEach((id) => { const cy = cyById[id]; if (!cy) return; applyEdgeStyle(cy); if (cy.elements().length) runLayout(id); });
+    // Text view: an expandable plain-text outline of the current map's nodes, top-down.
+    function renderTextView(id) {
+      const cy = cyById[id];
+      const tv = document.getElementById(id.replace('-graph', '-textview'));
+      if (!cy || !tv) return;
+      const nodes = cy.elements(':visible').nodes().filter((n) => nodeMeta[n.id()]);
+      const ordered = nodes.sort((a, b) => (a.position('y') - b.position('y')) || (a.position('x') - b.position('x')));
+      if (!ordered.length) { tv.innerHTML = '<div class="tv-head">No chain to show yet.</div>'; return; }
+      const chip = (arr, labeler, cls) => (arr && arr.length) ? arr.map((x) => `<span class="chip ${cls}">${esc(labeler(x))}</span>`).join('') : '<span class="ni-none">—</span>';
+      tv.innerHTML = `<div class="tv-head">${ordered.length} step(s) — click any to expand</div>`
+        + ordered.map((n) => {
+          const nm = nodeMeta[n.id()];
+          const goals = (nm.reachGoals && nm.reachGoals.length) ? nm.reachGoals : (nm.achieves ?? []);
+          return `<details class="tv-item"><summary><span class="tv-dot" style="background:${CAT_COLOR[nm.category] ?? '#8a93a6'}"></span>`
+            + `<span class="tv-name">${esc(nm.name)}</span><span class="chip tier-${esc(nm.tier)}">${esc(nm.tier)}</span><span class="tv-cat">${esc(nm.category)}</span></summary>`
+            + `<div class="tv-body"><p class="tv-sum">${esc((nm.summary ?? '').trim())}</p>`
+            + `<div class="sd-row"><span class="ni-lab">requires</span>${chip(nm.requires, (c) => capLabel[c] ?? c, 'cap')}</div>`
+            + `<div class="sd-row"><span class="ni-lab">provides</span>${chip(nm.provides, (c) => capLabel[c] ?? c, 'cap')}</div>`
+            + `<div class="sd-row"><span class="ni-lab">reaches</span>${chip(goals, (g) => goalLabel[g] ?? g, 'goal')}</div>`
+            + `<a class="ni-open" href="${BASE}node/${n.id()}/" target="_blank" rel="noopener">open full page ↗</a></div></details>`;
+        }).join('');
     }
+    // Apply the active view style (graph | flow | text) to one map.
+    function applyViewStyleFor(id) {
+      const cy = cyById[id];
+      const wrap = document.getElementById(id)?.closest('.graphwrap');
+      const tv = document.getElementById(id.replace('-graph', '-textview'));
+      const hasEls = cy && cy.elements().length;
+      if (graphStyle === 'text') {
+        if (wrap) wrap.style.display = 'none';
+        if (tv) { if (hasEls) { renderTextView(id); tv.hidden = false; } else { tv.hidden = true; } }
+      } else {
+        if (tv) tv.hidden = true;
+        if (wrap) wrap.style.display = hasEls ? 'block' : 'none';
+        if (cy) { applyEdgeStyle(cy); if (hasEls) { cy.resize(); runLayout(id); } }
+      }
+    }
+    function applyGraphStyleAll() { Object.keys(cyById).forEach(applyViewStyleFor); }
 
     function resizeAllGraphs() {
       Object.values(cyById).forEach((cy) => {
@@ -586,7 +625,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const container = document.getElementById(id);
       if (!container) return;
       const wrap = container.closest('.graphwrap');
-      if (typeof cytoscape === 'undefined' || !els.length) { if (wrap) wrap.style.display = 'none'; return; }
+      if (typeof cytoscape === 'undefined' || !els.length) { if (wrap) wrap.style.display = 'none'; const tv0 = document.getElementById(id.replace('-graph', '-textview')); if (tv0) tv0.hidden = true; return; }
       if (wrap) wrap.style.display = 'block';
       let cy = cyById[id];
       if (!cy) {
@@ -663,6 +702,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       applyEdgeStyle(cy);
       runLayout(id);
       applyDomainFilter(cy);
+      if (graphStyle === 'text') applyViewStyleFor(id); // new query while in text view
     }
 
     function focusNode(id, slug) {
@@ -1008,7 +1048,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         try { localStorage.setItem('lc-style', graphStyle); } catch (e) {}
         applyGraphStyleAll();
       }));
-      try { if (localStorage.getItem('lc-style') === 'flow') document.querySelector('#style-toggle [data-style=flow]')?.click(); } catch (e) {}
+      try { const s = localStorage.getItem('lc-style'); if (s && s !== 'graph') document.querySelector(`#style-toggle [data-style="${s}"]`)?.click(); } catch (e) {}
 
       const rail = document.getElementById('rail-toggle');
       if (rail) rail.addEventListener('click', () => {

@@ -531,3 +531,18 @@ a:hover { color: var(--text); }
   /* path flow can get wide — allow it to wrap tightly */
   .step { font-size: 13px; padding: 4px 8px; }
 }
+
+/* Phase 4 — expandable text view */
+.text-view { display: flex; flex-direction: column; gap: 6px; }
+.tv-head { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+.tv-item { border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elev); overflow: hidden; }
+.tv-item[open] { border-color: var(--accent-3); }
+.tv-item summary { display: flex; align-items: center; gap: 9px; padding: 11px 13px; cursor: pointer; list-style: none; }
+.tv-item summary::-webkit-details-marker { display: none; }
+.tv-item summary::before { content: '\25B8'; color: var(--text-dim); font-size: 11px; flex: none; transition: transform 0.12s ease; }
+.tv-item[open] summary::before { transform: rotate(90deg); }
+.tv-dot { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.tv-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); }
+.tv-cat { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+.tv-body { padding: 0 13px 13px 34px; display: flex; flex-direction: column; gap: 9px; }
+.tv-sum { font-size: 13px; line-height: 1.6; color: var(--text-muted); margin: 0; }
