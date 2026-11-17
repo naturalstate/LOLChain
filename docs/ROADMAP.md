@@ -65,10 +65,13 @@ applies to all three maps.
   and the full 9-category list — consistent with the README.
 - SVGs copied to `public/images/` so Astro serves them.
 
-## Phase 6 — Node-page mini-diagram
+## Phase 6 — Node-page mini-diagram ✅ (done 2026-11-17)
 
-On `/node/<slug>/`, show a small chain diagram centred on that node with
-navigation arrows to walk neighbours.
+On `/node/<slug>/`, a static 1-hop chain diagram above the detail: predecessors
+(↑ reached by) → the node → successors (↓ leads to), each neighbour a link that
+walks the chain, labelled with the linking capability. Entry points and
+terminal/goal nodes get a stub; the centre shows any goal it achieves. Capped at
+6 per side with a "+N more below" pointer. Pure HTML/CSS, no JS.
 
 ## Deferred (not scheduled)
 

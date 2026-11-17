@@ -7,6 +7,7 @@ export function getStaticPaths() {
   const capLabel = Object.fromEntries(capabilities.map((c) => [c.slug, c.label]));
   const goalLabel = Object.fromEntries(goals.map((g) => [g.slug, g.label]));
   const nodeName = Object.fromEntries(nodes.map((n) => [n.slug, n.name]));
+  const nodeCat = Object.fromEntries(nodes.map((n) => [n.slug, n.category]));
 
   return nodes.map((node) => ({
     params: { slug: node.slug },
@@ -15,6 +16,7 @@ export function getStaticPaths() {
       capLabel,
       goalLabel,
       nodeName,
+      nodeCat,
       outgoing: edges.filter((e) => e.from === node.slug),
       incoming: edges.filter((e) => e.to === node.slug),
     },
@@ -22,13 +24,33 @@ export function getStaticPaths() {
 }
 
 const base = import.meta.env.BASE_URL;
-const { node, capLabel, goalLabel, nodeName, outgoing, incoming } = Astro.props;
+const { node, capLabel, goalLabel, nodeName, nodeCat, outgoing, incoming } = Astro.props;
 const cap = (s) => capLabel[s] ?? s;
 
 const curatedOut = outgoing.filter((e) => e.type === 'curated');
 const derivedOut = outgoing.filter((e) => e.type === 'derived');
 const curatedIn = incoming.filter((e) => e.type === 'curated');
 const srcHref = `https://github.com/`; // repo URL set when hosting is chosen
+
+// --- 1-hop mini-diagram (predecessors -> this node -> successors) ---
+const CAT_COLOR = { web: '#4ea1d3', cloud: '#d9a441', kubernetes: '#56b877', cicd: '#e5484d', llm: '#a06cd5', mobile: '#3fb6b2', network: '#8a93a6', host: '#cf8e6d', 'active-directory': '#e26fb0' };
+const catColor = (c) => CAT_COLOR[c] ?? '#8a93a6';
+function neighbors(edges, key) {
+  const m = new Map();
+  for (const e of edges) {
+    const slug = e[key];
+    if (!m.has(slug)) m.set(slug, { slug, name: nodeName[slug] ?? slug, cat: nodeCat[slug], via: new Set(), curated: false });
+    const o = m.get(slug);
+    (e.via ?? []).forEach((v) => o.via.add(cap(v)));
+    if (e.type === 'curated') o.curated = true;
+  }
+  return [...m.values()].sort((a, b) => Number(b.curated) - Number(a.curated) || a.name.localeCompare(b.name));
+}
+const MM_MAX = 6;
+const predsAll = neighbors(incoming, 'from');
+const succsAll = neighbors(outgoing, 'to');
+const preds = predsAll.slice(0, MM_MAX);
+const succs = succsAll.slice(0, MM_MAX);
 ---
 <Base title={node.name} description={node.summary}>
   <div class="wrap">
@@ -45,6 +67,39 @@ const srcHref = `https://github.com/`; // repo URL set when hosting is chosen
         </div>
       </div>
       <a class="viewsrc" href={`${srcHref}`} target="_blank" rel="noopener">⌁ {node.slug}.yml</a>
+    </div>
+
+    <div class="minimap" aria-label="Chain neighbourhood — click a step to walk to it">
+      <div class="mm-zone">
+        <div class="mm-ztitle">↑ reached by</div>
+        {preds.length ? preds.map((p) => (
+          <a class="mm-card" href={`${base}node/${p.slug}/`}>
+            <span class="mm-row"><span class="mm-dot" style={`background:${catColor(p.cat)}`}></span><span class="mm-name">{p.name}</span></span>
+            <span class="mm-via">{[...p.via].join(', ')}</span>
+          </a>
+        )) : <div class="mm-stub">entry point</div>}
+        {predsAll.length > MM_MAX && <div class="mm-more">+{predsAll.length - MM_MAX} more below</div>}
+      </div>
+
+      <div class="mm-arrow" aria-hidden="true">→</div>
+
+      <div class="mm-node">
+        <span class="mm-row"><span class="mm-dot" style={`background:${catColor(node.category)}`}></span><span class="mm-name">{node.name}</span></span>
+        {node.achieves?.length > 0 && <span class="mm-goal">⚑ {node.achieves.map((g) => goalLabel[g] ?? g).join(', ')}</span>}
+      </div>
+
+      <div class="mm-arrow" aria-hidden="true">→</div>
+
+      <div class="mm-zone">
+        <div class="mm-ztitle">↓ leads to</div>
+        {succs.length ? succs.map((s) => (
+          <a class="mm-card" href={`${base}node/${s.slug}/`}>
+            <span class="mm-row"><span class="mm-dot" style={`background:${catColor(s.cat)}`}></span><span class="mm-name">{s.name}</span></span>
+            <span class="mm-via">{[...s.via].join(', ')}</span>
+          </a>
+        )) : <div class="mm-stub">{node.achieves?.length ? 'goal reached' : 'terminal'}</div>}
+        {succsAll.length > MM_MAX && <div class="mm-more">+{succsAll.length - MM_MAX} more below</div>}
+      </div>
     </div>
 
     <div class="detail">
