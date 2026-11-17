@@ -26,6 +26,10 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         <button type="button" data-view="standard" class="on">Standard</button>
         <button type="button" data-view="expanded">Expanded</button>
       </div>
+      <div class="view-toggle" id="style-toggle" title="How the chains are drawn">
+        <button type="button" data-style="graph" class="on">Graph</button>
+        <button type="button" data-style="flow">Flowchart</button>
+      </div>
       <button type="button" class="vbtn" id="rail-toggle" title="Collapse the controls panel for a wider map">⟨ panel</button>
     </div>
 
@@ -241,6 +245,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     const cyById = {};
     const layoutIdx = {};
     const lastRoots = {};
+    let graphStyle = 'graph'; // 'graph' (organic) | 'flow' (top-down flowchart, taxi edges)
 
     // Fit the whole graph into view (the start node stays on screen).
     function fitReadable(cy, eles) {
@@ -250,11 +255,27 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     function runLayout(id) {
       const cy = cyById[id];
       if (!cy || !cy.elements().length) return;
-      const name = LAYOUT_ORDER[layoutIdx[id] ?? 0];
-      const opts = { ...LAYOUTS[name] };
-      if (name === 'breadthfirst' && lastRoots[id]?.length) opts.roots = lastRoots[id];
+      let opts;
+      if (graphStyle === 'flow') {
+        // Flowchart: strict top-down hierarchy, ignore the shuffle layouts.
+        opts = { name: 'breadthfirst', directed: true, padding: 20, spacingFactor: 1.15 };
+        if (lastRoots[id]?.length) opts.roots = lastRoots[id];
+      } else {
+        const name = LAYOUT_ORDER[layoutIdx[id] ?? 0];
+        opts = { ...LAYOUTS[name] };
+        if (name === 'breadthfirst' && lastRoots[id]?.length) opts.roots = lastRoots[id];
+      }
       cy.layout(opts).run();
       fitReadable(cy);
+    }
+    // Edge rendering follows the view style: taxi (right-angle) for flowchart, bezier otherwise.
+    function applyEdgeStyle(cy) {
+      if (!cy) return;
+      const flow = graphStyle === 'flow';
+      cy.edges().style({ 'curve-style': flow ? 'taxi' : 'bezier', 'taxi-direction': 'downward', 'taxi-turn': '24px', 'taxi-turn-min-distance': '8px' });
+    }
+    function applyGraphStyleAll() {
+      Object.keys(cyById).forEach((id) => { const cy = cyById[id]; if (!cy) return; applyEdgeStyle(cy); if (cy.elements().length) runLayout(id); });
     }
 
     function resizeAllGraphs() {
@@ -639,6 +660,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       cy.resize();
       lastRoots[id] = roots?.length ? roots : null;
       if (layoutIdx[id] === undefined) layoutIdx[id] = 0;
+      applyEdgeStyle(cy);
       runLayout(id);
       applyDomainFilter(cy);
     }
@@ -978,6 +1000,16 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         try { localStorage.setItem('lc-view', b.dataset.view); } catch (e) {}
         setTimeout(resizeAllGraphs, 70);
       }));
+      const st = document.getElementById('style-toggle');
+      if (st) st.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+        st.querySelectorAll('button').forEach((x) => x.classList.remove('on'));
+        b.classList.add('on');
+        graphStyle = b.dataset.style;
+        try { localStorage.setItem('lc-style', graphStyle); } catch (e) {}
+        applyGraphStyleAll();
+      }));
+      try { if (localStorage.getItem('lc-style') === 'flow') document.querySelector('#style-toggle [data-style=flow]')?.click(); } catch (e) {}
+
       const rail = document.getElementById('rail-toggle');
       if (rail) rail.addEventListener('click', () => {
         const c = wrapEl.classList.toggle('rail-collapsed');

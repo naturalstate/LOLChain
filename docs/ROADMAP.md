@@ -43,10 +43,14 @@ directly vs. through a chain; a node shows ↑reached-by / ↓leads-to (clickabl
 keep walking) plus requires/provides/reaches; a breadcrumb trail returns to
 search. Map-only controls (viewbar/legend/scope) hide on this tab.
 
-## Phase 4 — View styles
+## Phase 4 — View styles (in progress)
 
-Flowchart-style layout + an expandable plain-text view (click a step to expand
-detail). Picker on the query page.
+- ✅ **Flowchart** view style: a Graph / Flowchart picker in the viewbar. Flowchart
+  forces a strict top-down hierarchical layout with taxi (right-angle) edges;
+  Graph keeps the organic/shuffle layouts. Choice persists (localStorage),
+  applies to all three maps.
+- ⬜ **Expandable plain-text** view: a text-first rendering where each chain step
+  is a row you click to expand (summary, requires/provides). Next increment.
 
 ## Phase 5 — Content pages
 
