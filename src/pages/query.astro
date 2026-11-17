@@ -469,6 +469,37 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const vis = cy.elements(':visible');
       if (vis.nodes().length) { showChainKey(graphId, vis); try { cy.fit(vis, 24); } catch (e) {} } else hideChainKey(graphId);
     }
+    // Mark the map as pruned and reveal the "show all" restore button.
+    function markPruned(graphId) {
+      const cy = cyById[graphId]; if (!cy) return;
+      cy.scratch('_pruned', true);
+      const sa = document.getElementById(graphId)?.closest('.graphwrap')?.querySelector('[data-act=showall]');
+      if (sa) sa.style.display = 'inline-flex';
+    }
+    // Remove a set of nodes from the diagram + selected-chain list, then redraw.
+    // Undoable via the chain list's ↶ undo when a selection is active; "show all" otherwise.
+    function removeFromGraph(graphId, slugs) {
+      const cy = cyById[graphId]; if (!cy) return;
+      const items = cy.scratch('_pathItems');
+      const hasItems = !!(items && items.length);
+      if (hasItems) { pushPathHistory(cy); cy.scratch('_pathItems', items.filter((i) => !slugs.has(i.slug))); }
+      cy.batch(() => slugs.forEach((s) => { const n = cy.getElementById(s); if (n.length) { n.hide(); n.connectedEdges().hide(); } }));
+      markPruned(graphId);
+      if (hasItems) applyPathItems(graphId); // re-fits + re-renders the list
+      else {
+        const vis = cy.elements(':visible');
+        if (vis.nodes().length) { showChainKey(graphId, vis); try { cy.fit(vis, 24); } catch (e) {} } else hideChainKey(graphId);
+      }
+      hideNodeInfo(graphId);
+    }
+    // Remove every visible node sharing the clicked node's scope category.
+    function removeCategory(graphId, slug) {
+      const cy = cyById[graphId]; if (!cy) return;
+      const cat = nodeMeta[slug]?.category;
+      const slugs = new Set(cy.nodes(':visible').filter((n) => nodeMeta[n.id()]?.category === cat).map((n) => n.id()));
+      slugs.add(slug);
+      removeFromGraph(graphId, slugs);
+    }
     function renderSelectedPathway(graphId) {
       const box = document.getElementById(sideId(graphId, 'pathway'));
       const cy = cyById[graphId];
@@ -638,6 +669,10 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         // context menu: "use this exploit path"
         const menu = document.createElement('div'); menu.className = 'cy-menu'; menu.style.display = 'none';
         menu.innerHTML = '<button type="button" class="cy-menu-use">⛓ use this path</button>'
+          + '<button type="button" class="cy-menu-start">◎ set as start</button>'
+          + '<button type="button" class="cy-menu-goal">⚑ set as goal</button>'
+          + '<button type="button" class="cy-menu-rm cy-menu-rmnode">✕ remove from path</button>'
+          + '<button type="button" class="cy-menu-rm cy-menu-rmcat">✕ remove category</button>'
           + '<button type="button" class="cy-menu-open">↗ open info in new tab</button>';
         if (wrap) wrap.appendChild(menu);
         // chain key (bottom-left: the selected/pruned chain) + node key (top-left: hovered node)
@@ -658,7 +693,12 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
           const p = e.target.renderedPosition();
           menu.style.left = Math.round(p.x) + 'px';
           menu.style.top = Math.round(p.y) + 'px';
-          menu.style.display = 'block';
+          // Per-node menu config: category label + goal-only "set as goal".
+          const meta = nodeMeta[menuTarget];
+          const cat = meta?.category;
+          menu.querySelector('.cy-menu-rmcat').textContent = `✕ remove ${cat ?? 'category'} from path`;
+          menu.querySelector('.cy-menu-goal').style.display = (meta?.achieves || []).length ? '' : 'none';
+          menu.style.display = 'flex';
           // Brief overview of the clicked node in the sidebar; collapse inputs to make room.
           showNodeInfo(id, menuTarget);
           collapseInputs(id);
@@ -666,7 +706,17 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         cy.on('tap', (e) => { if (e.target === cy) hideMenu(); });
         cy.on('pan zoom', hideMenu);
         menu.querySelector('.cy-menu-use').addEventListener('click', () => { if (menuTarget) pruneToPath(id, menuTarget); hideMenu(); });
+        menu.querySelector('.cy-menu-start').addEventListener('click', () => { if (menuTarget) setGoalStart(menuTarget); hideMenu(); });
+        menu.querySelector('.cy-menu-goal').addEventListener('click', () => { if (menuTarget) setGoalGoal(menuTarget); hideMenu(); });
+        menu.querySelector('.cy-menu-rmnode').addEventListener('click', () => { if (menuTarget) removeFromGraph(id, new Set([menuTarget])); hideMenu(); });
+        menu.querySelector('.cy-menu-rmcat').addEventListener('click', () => { if (menuTarget) removeCategory(id, menuTarget); hideMenu(); });
         menu.querySelector('.cy-menu-open').addEventListener('click', () => { if (menuTarget) window.open(`${BASE}node/${menuTarget}/`, '_blank', 'noopener'); hideMenu(); });
+        // Bottom chain readout: click-drag to scroll horizontally when a long chain clips.
+        { let dn = false, sx = 0, sl = 0;
+          ckey.addEventListener('pointerdown', (ev) => { dn = true; sx = ev.clientX; sl = ckey.scrollLeft; ckey.classList.add('grabbing'); try { ckey.setPointerCapture(ev.pointerId); } catch (e) {} });
+          ckey.addEventListener('pointermove', (ev) => { if (dn) ckey.scrollLeft = sl - (ev.clientX - sx); });
+          const upk = () => { dn = false; ckey.classList.remove('grabbing'); };
+          ckey.addEventListener('pointerup', upk); ckey.addEventListener('pointercancel', upk); }
         // hover: highlight the whole chain through the node (upstream AND downstream),
         // dim the rest, and show the chain as text in the top-left key. Scoped to
         // visible elements so it keeps working after a prune (repeatable).
@@ -861,6 +911,22 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         ? paths.map((p) => pathCard(p, goalSet)).join('')
         : '<div class="q-empty">No path within 6 hops. Try removing the "through" constraint, or a different start — curated multi-hop chains are sparse by design.</div>';
       drawGraph('g-graph', pathElements(paths), gState.node ? [gState.node] : undefined);
+    }
+
+    function activateTab(name) { document.querySelector(`.tab[data-tab="${name}"]`)?.click(); }
+    // Context-menu "set as start": make the clicked node the start of an X -> goal Z query.
+    function setGoalStart(slug) {
+      gState.node = slug;
+      const sel = document.getElementById('g-node'); if (sel) sel.value = slug;
+      activateTab('goal'); syncGoalAvail(); renderGoal();
+    }
+    // Context-menu "set as goal": the clicked node achieves a goal, so target that goal.
+    // Only offered on goal-achieving nodes, which map to the X -> goal Z goal dropdown.
+    function setGoalGoal(slug) {
+      const g = (nodeMeta[slug]?.achieves || [])[0]; if (!g) return;
+      gState.goal = g;
+      const sel = document.getElementById('g-goal'); if (sel) sel.value = g;
+      activateTab('goal'); syncGoalAvail(); renderGoal();
     }
 
     // --- backward mode ---

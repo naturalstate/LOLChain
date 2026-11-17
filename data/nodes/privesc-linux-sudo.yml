@@ -1,5 +1,5 @@
 id: privesc-linux-sudo
-name: Sudo Misconfiguration (GTFOBins)
+name: Sudo Misconfiguration
 slug: privesc-linux-sudo
 tier: basic
 category: host

@@ -433,8 +433,11 @@ a:hover { color: var(--text); }
   box-shadow: 0 6px 18px rgba(0,0,0,0.5); backdrop-filter: blur(2px);
 }
 .cy-menu .cy-menu-open { border-color: var(--accent-3); color: var(--accent-3); }
+.cy-menu .cy-menu-start { border-color: var(--accent-3); color: var(--accent-3); }
+.cy-menu .cy-menu-rm { border-color: #e5484d; color: #e5484d; }
 .cy-menu button:hover { background: var(--accent); color: #0a0e14; }
-.cy-menu .cy-menu-open:hover { background: var(--accent-3); color: #0a0e14; }
+.cy-menu .cy-menu-open:hover, .cy-menu .cy-menu-start:hover { background: var(--accent-3); color: #0a0e14; }
+.cy-menu .cy-menu-rm:hover { background: #e5484d; color: #0a0e14; }
 
 /* Node key (top-left: hovered node) + chain key (bottom-left: selected chain) */
 .cy-nodekey {
@@ -447,11 +450,15 @@ a:hover { color: var(--text); }
   position: absolute; bottom: 8px; left: 8px; right: 8px; z-index: 4;
   font-family: var(--mono); font-size: 11px; line-height: 1.5;
   background: rgba(10,14,20,0.92); border: 1px solid var(--border-strong); border-radius: 6px;
-  padding: 7px 10px; backdrop-filter: blur(2px); pointer-events: none;
+  padding: 8px 12px; min-height: 34px; display: flex; align-items: center; backdrop-filter: blur(2px);
   white-space: nowrap; overflow-x: auto; scrollbar-width: none;
+  pointer-events: auto; cursor: grab; touch-action: pan-x; overscroll-behavior-x: contain;
+  -webkit-user-select: none; user-select: none;
 }
+.cy-chainkey.grabbing { cursor: grabbing; }
 .cy-chainkey::-webkit-scrollbar { display: none; }
 .cy-nodekey .ck-node, .cy-chainkey .ck-node { font-weight: 600; }
+.cy-chainkey .ck-node, .cy-chainkey .ck-sep { flex: 0 0 auto; }
 .cy-chainkey .ck-sep { color: var(--text-dim); margin: 0 5px; }
 .gc.gc-showall { color: var(--accent); border-color: var(--accent); }
 

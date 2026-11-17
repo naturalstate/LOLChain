@@ -73,6 +73,31 @@ walks the chain, labelled with the linking capability. Entry points and
 terminal/goal nodes get a stub; the centre shows any goal it achieves. Capped at
 6 per side with a "+N more below" pointer. Pure HTML/CSS, no JS.
 
+## Phase 7 — Node context-menu actions + UX fixes ✅ (done 2026-11-17)
+
+Extends the Phase 2 node context menu on the query page, plus two fixes.
+
+- **Menu now stacks vertically** (was rendering side-by-side: the show handler
+  set `display:block`, overriding the stylesheet's flex column — now shows as
+  `flex`).
+- **remove from path** — hide the clicked node (and its edges) from the diagram
+  and the selected-chain list, then redraw. Undoable via the chain list's ↶ undo
+  when a selection is active; "show all" restores otherwise.
+- **remove `<category>` from path** — dynamic label per node (e.g. "remove
+  active-directory from path"); strips every visible node in that scope category
+  and redraws.
+- **set as start** — makes the clicked node the start of an `X → goal Z` query
+  (switches to that tab, populates the start dropdown). Offered on any node.
+- **set as goal** — the clicked node achieves a goal, so target that goal in
+  `X → goal Z`. Offered only on goal-achieving nodes (which map to the goal
+  dropdown's options).
+- **Data fix:** node title "Sudo Misconfiguration (GTFOBins)" → "Sudo
+  Misconfiguration"; we don't name a tool/site in a title. GTFOBins stays in the
+  node summary and references.
+- **Bottom chain readout** (`.cy-chainkey`): was `pointer-events:none`, so a long
+  chain clipped on the right with no way to scroll. Now draggable (click-drag to
+  scroll horizontally) and a taller two-line strip.
+
 ## Deferred (not scheduled)
 
 - Browser-storage canvas (save/pin a custom chain locally). User: "maybe don't
