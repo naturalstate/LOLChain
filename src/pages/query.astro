@@ -54,6 +54,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     <div class="panel active" id="panel-forward">
       <div class="mode-layout">
         <aside class="controls" id="f-controls">
+          <div class="pathway-list" id="f-pathway" hidden></div>
           <div class="control-group collapsible" data-group="posture">
             <button class="ghead" type="button"><span class="label">Start posture</span><span class="gsummary"></span><span class="gchevron">▾</span></button>
             <div class="gbody">
@@ -92,7 +93,6 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
           </div>
           <div class="btn-row"><button class="btn" id="f-reset" type="button">Reset</button></div>
           <div class="node-info" id="f-info" hidden></div>
-          <div class="pathway-list" id="f-pathway" hidden></div>
         </aside>
         <section>
           <div class="q-summary" id="f-summary">Pick a starting point to trace chains.</div>
@@ -116,6 +116,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     <div class="panel" id="panel-goal">
       <div class="mode-layout">
         <aside class="controls">
+          <div class="pathway-list" id="g-pathway" hidden></div>
           <div class="control-group">
             <div class="ghead"><span class="label">Start from a vuln</span></div>
             <select id="g-node"><option value="">— pick —</option>{nodeChoices.map((n) => <option value={n.slug}>{n.name}</option>)}</select>
@@ -131,7 +132,6 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
           <p class="control-hint">Greyed-out goals and “through” vulns can't be reached from the chosen start — the graph only links steps that actually hand off a capability, so an impossible combination is disabled rather than returning an empty map.</p>
           <div class="btn-row"><button class="btn" id="g-reset" type="button">Reset</button></div>
           <div class="node-info" id="g-info" hidden></div>
-          <div class="pathway-list" id="g-pathway" hidden></div>
         </aside>
         <section>
           <div class="q-summary" id="g-summary">Pick a start vuln and a goal.</div>
@@ -154,13 +154,13 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     <div class="panel" id="panel-backward">
       <div class="mode-layout">
         <aside class="controls">
+          <div class="pathway-list" id="b-pathway" hidden></div>
           <div class="control-group">
             <div class="ghead"><span class="label">I want to achieve</span></div>
             <select id="b-goal"><option value="">— pick —</option>{goalChoices.map((g) => <option value={g.slug}>{g.label}</option>)}</select>
           </div>
           <p class="control-hint">The map shows <b>every</b> vuln that reaches this goal and the entry paths into each. Click a result to centre it on the map.</p>
           <div class="node-info" id="b-info" hidden></div>
-          <div class="pathway-list" id="b-pathway" hidden></div>
         </aside>
         <section>
           <div class="q-summary" id="b-summary">Pick a goal to see what gives it and what each step needs.</div>
@@ -364,47 +364,100 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       if (aside) aside.querySelectorAll('.control-group.collapsible').forEach((g) => g.classList.add('collapsed'));
     }
 
-    // Pathway list: the hovered (preview) or selected (removable) chain, as a list.
-    function pathwayItemsHtml(coll, removable) {
-      return orderChain(coll).map((n) => {
-        const slug = n.id(), nm = nodeMeta[slug];
-        const col = CAT_COLOR[nm?.category] ?? '#8a93a6';
-        return `<li data-slug="${esc(slug)}"><span class="pw-dot" style="background:${col}"></span>`
-          + `<button type="button" class="pw-name">${esc(nm?.name ?? slug)}</button>`
-          + (removable ? '<button type="button" class="pw-x" title="Hide this step from the map">✕</button>' : '') + '</li>';
-    }).join('');
-    }
-    function showPathway(graphId, coll, removable) {
+    // Hover preview: a read-only list of the chain under the cursor (no controls).
+    function showPathwayPreview(graphId, coll) {
       const box = document.getElementById(sideId(graphId, 'pathway'));
       if (!box) return;
-      // Drop synthetic start nodes (e.g. the "__held" capabilities root) — real vulns only.
       const real = coll && coll.nodes ? coll.nodes().filter((n) => nodeMeta[n.id()]) : null;
       if (!real || real.length < 1) { box.hidden = true; return; }
-      box.innerHTML = `<div class="pw-head">${removable ? 'Selected chain' : 'Chain preview'}`
-        + `<span class="pw-count">${real.length}</span></div>`
-        + `<ul class="pw-list">${pathwayItemsHtml(real, removable)}</ul>`;
+      const order = orderChain(real);
+      box.innerHTML = `<div class="pw-head"><span>Chain preview <span class="pw-count">${order.length}</span></span></div>`
+        + `<ul class="pw-list">${order.map((n) => {
+          const nm = nodeMeta[n.id()], col = CAT_COLOR[nm?.category] ?? '#8a93a6';
+          return `<li><span class="pw-dot" style="background:${col}"></span><span class="pw-name pw-name-static">${esc(nm?.name ?? n.id())}</span></li>`;
+        }).join('')}</ul>`;
       box.hidden = false;
+    }
+    // Selected chain: an editable item list. Each step can be toggled (eye) without
+    // leaving the list, or removed (✕); every change is undoable.
+    function pushPathHistory(cy) {
+      const h = cy.scratch('_pathHistory') || [];
+      h.push(JSON.parse(JSON.stringify(cy.scratch('_pathItems') || [])));
+      cy.scratch('_pathHistory', h);
+    }
+    function initPathItems(graphId, keepColl) {
+      const cy = cyById[graphId]; if (!cy) return;
+      const order = orderChain(keepColl.nodes().filter((n) => nodeMeta[n.id()]));
+      cy.scratch('_pathItems', order.map((n) => ({ slug: n.id(), hidden: false })));
+      cy.scratch('_pathHistory', []);
+      renderSelectedPathway(graphId);
+    }
+    // Apply the item list's visibility to the map (nodes + their interconnecting edges).
+    function applyPathItems(graphId) {
+      const cy = cyById[graphId]; if (!cy) return;
+      const items = cy.scratch('_pathItems') || [];
+      const keep = new Set(items.map((i) => i.slug));
+      const shown = new Set(items.filter((i) => !i.hidden).map((i) => i.slug));
+      cy.batch(() => {
+        items.forEach((i) => { const n = cy.getElementById(i.slug); if (n.length) (i.hidden ? n.hide() : n.show()); });
+        cy.edges().forEach((e) => {
+          const s = e.source().id(), t = e.target().id();
+          if (keep.has(s) && keep.has(t)) ((shown.has(s) && shown.has(t)) ? e.show() : e.hide());
+        });
+      });
+      renderSelectedPathway(graphId);
+      const vis = cy.elements(':visible');
+      if (vis.nodes().length) { showChainKey(graphId, vis); try { cy.fit(vis, 24); } catch (e) {} } else hideChainKey(graphId);
+    }
+    function renderSelectedPathway(graphId) {
+      const box = document.getElementById(sideId(graphId, 'pathway'));
       const cy = cyById[graphId];
+      if (!box || !cy) return;
+      const items = cy.scratch('_pathItems') || [];
+      if (!items.length) { box.hidden = true; box.innerHTML = ''; return; }
+      const canUndo = (cy.scratch('_pathHistory') || []).length > 0;
+      box.innerHTML = `<div class="pw-head"><span>Selected chain <span class="pw-count">${items.length}</span></span>`
+        + `<button type="button" class="pw-undo" ${canUndo ? '' : 'disabled'} title="Undo the last change">↶ undo</button></div>`
+        + `<ul class="pw-list">${items.map((it) => {
+          const nm = nodeMeta[it.slug], col = CAT_COLOR[nm?.category] ?? '#8a93a6';
+          return `<li data-slug="${esc(it.slug)}" class="${it.hidden ? 'off' : ''}">`
+            + `<span class="pw-dot" style="background:${col}"></span>`
+            + `<button type="button" class="pw-name">${esc(nm?.name ?? it.slug)}</button>`
+            + `<button type="button" class="pw-eye" title="${it.hidden ? 'Show this step on the map' : 'Hide this step from the map'}">${it.hidden ? '⊘' : '⊙'}</button>`
+            + `<button type="button" class="pw-x" title="Remove this step from the list">✕</button></li>`;
+        }).join('')}</ul>`;
+      box.hidden = false;
+      box.querySelector('.pw-undo')?.addEventListener('click', () => {
+        const h = cy.scratch('_pathHistory') || []; if (!h.length) return;
+        cy.scratch('_pathItems', h.pop()); cy.scratch('_pathHistory', h); applyPathItems(graphId);
+      });
       box.querySelectorAll('.pw-name').forEach((b) => b.addEventListener('click', () => focusNode(graphId, b.closest('li').dataset.slug)));
+      box.querySelectorAll('.pw-eye').forEach((b) => b.addEventListener('click', () => {
+        const slug = b.closest('li').dataset.slug;
+        pushPathHistory(cy);
+        const it = (cy.scratch('_pathItems') || []).find((i) => i.slug === slug);
+        if (it) it.hidden = !it.hidden;
+        applyPathItems(graphId);
+      }));
       box.querySelectorAll('.pw-x').forEach((b) => b.addEventListener('click', () => {
         const slug = b.closest('li').dataset.slug;
-        const node = cy.getElementById(slug);
-        node.hide(); node.connectedEdges().hide();
-        const vis = cy.elements(':visible');
-        showPathway(graphId, vis.nodes().length ? vis : null, true);
-        if (vis.nodes().length) showChainKey(graphId, vis); else hideChainKey(graphId);
-        try { if (vis.nodes().length) cy.fit(vis, 24); } catch (e) {}
+        pushPathHistory(cy);
+        const node = cy.getElementById(slug); node.hide(); node.connectedEdges().hide();
+        cy.scratch('_pathItems', (cy.scratch('_pathItems') || []).filter((i) => i.slug !== slug));
+        applyPathItems(graphId);
       }));
     }
     function hidePathway(graphId) {
       const box = document.getElementById(sideId(graphId, 'pathway'));
       if (box) { box.hidden = true; box.innerHTML = ''; }
+      const cy = cyById[graphId];
+      if (cy) { cy.scratch('_pathItems', null); cy.scratch('_pathHistory', null); }
     }
     // After a hover preview ends, fall back to the locked selected chain if pruned.
     function restorePathway(graphId) {
       const cy = cyById[graphId];
-      if (cy && cy.scratch('_pruned')) showPathway(graphId, cy.elements(':visible'), true);
-      else hidePathway(graphId);
+      if (cy && cy.scratch('_pruned') && (cy.scratch('_pathItems') || []).length) renderSelectedPathway(graphId);
+      else { const box = document.getElementById(sideId(graphId, 'pathway')); if (box && !(cy && cy.scratch('_pruned'))) { box.hidden = true; box.innerHTML = ''; } }
     }
 
     // "Use this exploit path": keep the chosen node + everything up/downstream of it,
@@ -422,7 +475,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const wrap = document.getElementById(id)?.closest('.graphwrap');
       const sa = wrap && wrap.querySelector('[data-act=showall]'); if (sa) sa.style.display = 'inline-flex';
       showChainKey(id, keep); // bottom-left: the chain you selected
-      showPathway(id, keep, true); // sidebar: the selected chain, each step removable
+      initPathItems(id, keep); // sidebar: the selected chain, editable + undoable
       if (!drop.length) { fitReadable(cy, keep); return; }
       // Hide the other branches immediately, hold the kept nodes in place for a
       // beat, then re-run the layout so the chosen chain tidies up. A straight
@@ -563,7 +616,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
           vis.addClass('dim');
           chain.removeClass('dim').addClass('hl');
           showNodeKey(id, e.target);
-          showPathway(id, chain, false); // sidebar preview of the hovered chain
+          showPathwayPreview(id, chain); // sidebar preview of the hovered chain
         });
         cy.on('mouseout', 'node', () => { cy.elements().removeClass('dim hl'); hideNodeKey(id); restorePathway(id); });
         if (wrap) wrap.querySelectorAll('.gc').forEach((btn) => btn.addEventListener('click', () => {
