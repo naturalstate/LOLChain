@@ -3,6 +3,7 @@ name: SeImpersonate → SYSTEM (Potato)
 slug: privesc-windows-potato
 tier: advanced
 category: host
+os: windows
 aliases: [potato, juicypotato, printspoofer, roguepotato, seimpersonate]
 summary: >
   Windows service accounts often hold SeImpersonatePrivilege. The Potato family

@@ -64,6 +64,9 @@ export function buildGraph() {
     // Soft-filter domains default to the node's own category; bridge nodes override
     // with several so cross-domain paths persist in a single-domain view.
     node.domains = Array.isArray(node.domains) && node.domains.length ? node.domains : [node.category];
+    // Optional OS binding: suppresses cross-OS derived edges (e.g. a Windows-only RCE
+    // must not derive an edge into a Linux local-privesc node). Null = OS-agnostic.
+    node.os ??= null;
     nodes.push(node);
   }
 
@@ -130,6 +133,9 @@ export function buildGraph() {
     for (const b of nodes) {
       if (a.slug === b.slug) continue;
       if (curatedKeys.has(`${a.slug}->${b.slug}`)) continue;
+      // Cross-OS guard: when both ends declare an OS and they differ, the hand-off is
+      // physically impossible (Windows RCE can't lead to a Linux sudo privesc).
+      if (a.os && b.os && a.os !== b.os) continue;
       const via = b.requires.filter((r) => provides.has(r));
       if (via.length) {
         edges.push({

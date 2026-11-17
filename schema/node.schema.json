@@ -19,6 +19,10 @@
       "items": { "enum": ["web", "api", "cloud", "kubernetes", "cicd", "llm", "mobile", "network", "host", "active-directory", "internal"] },
       "description": "Soft test-type tags for filtering. Defaults to [category]; bridge nodes carry several so cross-domain paths survive a single-domain view."
     },
+    "os": {
+      "enum": ["linux", "windows"],
+      "description": "Optional OS binding. When set on both ends, cross-OS derived edges are suppressed (a Windows RCE will not derive into a Linux local-privesc node). Omit for OS-agnostic techniques."
+    },
     "summary": { "type": "string", "minLength": 10 },
     "requires": { "type": "array", "items": { "type": "string" }, "default": [] },
     "provides": { "type": "array", "items": { "type": "string" }, "minItems": 1 },

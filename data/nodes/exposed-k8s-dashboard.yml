@@ -13,7 +13,8 @@ provides:
   - cluster-api-access
   - service-account-token
   - cloud-credentials
-achieves: []
+achieves:
+  - cluster-admin
 detection: >
   Dashboard/API server reachable from the internet; anonymous API calls succeeding;
   pod exec and secret reads from unexpected sources; new workloads (e.g. miners)

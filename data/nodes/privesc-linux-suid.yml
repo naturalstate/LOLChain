@@ -3,6 +3,7 @@ name: SUID/SGID Binary Abuse
 slug: privesc-linux-suid
 tier: basic
 category: host
+os: linux
 aliases: [suid-privesc, sgid-abuse, setuid-abuse]
 summary: >
   A SUID/SGID binary runs with its owner's privileges regardless of the caller. If such a

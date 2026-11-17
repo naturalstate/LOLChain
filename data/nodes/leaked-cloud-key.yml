@@ -12,7 +12,8 @@ summary: >
 requires: []
 provides:
   - cloud-credentials
-achieves: []
+achieves:
+  - cloud-account-compromise
 detection: >
   Secret scanning hits in repos/images; use of long-lived access keys (vs. temporary
   role creds); IAM key usage from new source IPs or outside normal automation;

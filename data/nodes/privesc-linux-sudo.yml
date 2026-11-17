@@ -3,6 +3,7 @@ name: Sudo Misconfiguration (GTFOBins)
 slug: privesc-linux-sudo
 tier: basic
 category: host
+os: linux
 aliases: [sudo-privesc, gtfobins-sudo, sudo-abuse]
 summary: >
   With a shell on a Linux host, an attacker abuses an over-permissive sudoers entry —

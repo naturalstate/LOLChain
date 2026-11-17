@@ -3,6 +3,7 @@ name: Windows Kernel / Driver Exploit
 slug: privesc-windows-kernel
 tier: advanced
 category: host
+os: windows
 aliases: [windows-kernel-exploit, byovd, driver-exploit]
 summary: >
   A local Windows kernel or signed-but-vulnerable driver flaw (BYOVD — bring your own

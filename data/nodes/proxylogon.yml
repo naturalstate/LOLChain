@@ -3,6 +3,7 @@ name: ProxyLogon Pattern (Exchange)
 slug: proxylogon
 tier: expert
 category: network
+os: windows
 aliases: [proxylogon, cve-2021-26855]
 summary: >
   A pre-auth SSRF in Exchange is chained to an authentication bypass, then

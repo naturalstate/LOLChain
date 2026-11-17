@@ -3,6 +3,7 @@ name: Linux Kernel / Capability Exploit
 slug: privesc-linux-kernel
 tier: advanced
 category: host
+os: linux
 aliases: [kernel-exploit, pwnkit, dirtypipe, dirtycow]
 summary: >
   A local kernel or privileged-helper flaw (PwnKit/pkexec CVE-2021-4034, Dirty Pipe

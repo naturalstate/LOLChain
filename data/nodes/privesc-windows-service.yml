@@ -3,6 +3,7 @@ name: Weak Service / Unquoted Path / DLL Hijack
 slug: privesc-windows-service
 tier: advanced
 category: host
+os: windows
 aliases: [weak-service-perms, unquoted-service-path, dll-hijack, alwaysinstallelevated]
 summary: >
   Misconfigured Windows services escalate a local shell: weak service permissions let you

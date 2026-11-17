@@ -3,6 +3,7 @@ name: ProxyShell Pattern (Exchange)
 slug: proxyshell
 tier: expert
 category: network
+os: windows
 aliases: [proxyshell, cve-2021-34473]
 summary: >
   Frontend path-confusion/SSRF reaches an authenticated backend without credentials,

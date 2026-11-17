@@ -5,10 +5,12 @@ tier: expert
 category: active-directory
 aliases: [domain-admin, ad-takeover, da]
 summary: >
-  Harvested domain credentials are escalated through AD misconfigurations
-  (Kerberoasting, delegation, ACL abuse, DCSync) to full control of the domain.
+  The final consolidation step: with DCSync (or equivalent Tier-0 control) in hand,
+  replicate every credential including krbtgt, forge golden tickets, and seize full,
+  persistent control of the domain. Reached by chaining the discrete AD techniques
+  (roasting, delegation, ACL/object-control abuse) up to domain-head rights.
 requires:
-  - domain-credentials
+  - dcsync-rights
 provides:
   - lateral-movement
 achieves:
