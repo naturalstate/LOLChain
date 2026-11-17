@@ -182,9 +182,9 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       { selector: 'node', style: {
         'background-color': (el) => CAT_COLOR[el.data('cat')] ?? '#8a93a6',
         'label': 'data(label)', 'color': '#0a0e14', 'font-family': 'JetBrains Mono, monospace',
-        'font-size': 9, 'font-weight': 600, 'text-valign': 'center', 'text-halign': 'center',
-        'text-wrap': 'wrap', 'text-max-width': 96, 'shape': 'round-rectangle',
-        'width': 'label', 'height': 'label', 'padding': 8 } },
+        'font-size': 13, 'font-weight': 600, 'text-valign': 'center', 'text-halign': 'center',
+        'text-wrap': 'wrap', 'text-max-width': 130, 'shape': 'round-rectangle',
+        'width': 'label', 'height': 'label', 'padding': 11 } },
       { selector: 'node[goal = 1]', style: { 'border-width': 3, 'border-color': '#e5484d' } },
       { selector: 'node[start = 1]', style: { 'shape': 'ellipse', 'border-width': 2, 'border-color': '#e4e8f0' } },
       { selector: 'node.focus', style: { 'border-width': 4, 'border-color': '#e4e8f0' } },
@@ -195,24 +195,33 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       { selector: 'edge', style: {
         'width': 1.5, 'line-color': '#4a5162', 'target-arrow-color': '#4a5162',
         'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'arrow-scale': 0.9,
-        'label': 'data(via)', 'font-family': 'JetBrains Mono, monospace', 'font-size': 7,
+        'label': 'data(via)', 'font-family': 'JetBrains Mono, monospace', 'font-size': 9,
         'color': '#8a93a6', 'text-background-color': '#0f141c', 'text-background-opacity': 0.9,
         'text-background-padding': 2 } },
       { selector: 'edge[curated = 0]', style: { 'line-style': 'dashed', 'line-color': '#333b49', 'target-arrow-color': '#333b49' } },
     ];
 
     const LAYOUTS = {
-      breadthfirst: { name: 'breadthfirst', directed: true, padding: 18, spacingFactor: 1.15 },
-      cose: { name: 'cose', padding: 18, animate: false, nodeRepulsion: 9000, idealEdgeLength: 90, nodeOverlap: 16 },
-      concentric: { name: 'concentric', padding: 18, minNodeSpacing: 24 },
-      circle: { name: 'circle', padding: 18 },
-      grid: { name: 'grid', padding: 18 },
+      breadthfirst: { name: 'breadthfirst', directed: true, padding: 20, spacingFactor: 1.4 },
+      cose: { name: 'cose', padding: 20, animate: false, nodeRepulsion: 13000, idealEdgeLength: 120, nodeOverlap: 24 },
+      concentric: { name: 'concentric', padding: 20, minNodeSpacing: 40 },
+      circle: { name: 'circle', padding: 20, spacingFactor: 1.3 },
+      grid: { name: 'grid', padding: 20, avoidOverlapPadding: 16 },
     };
     const LAYOUT_ORDER = ['breadthfirst', 'cose', 'concentric', 'circle', 'grid'];
+    // Keep the default view readable: never auto-zoom below this; the user pans a big
+    // graph rather than squinting at a fully-fit, microscopic one.
+    const READABLE_MIN_ZOOM = 0.62;
 
     const cyById = {};
     const layoutIdx = {};
     const lastRoots = {};
+
+    // Fit, but don't zoom out past the readability floor (pan instead).
+    function fitReadable(cy, eles) {
+      cy.fit(eles, 26);
+      if (cy.zoom() < READABLE_MIN_ZOOM) { cy.zoom(READABLE_MIN_ZOOM); cy.center(eles); }
+    }
 
     function runLayout(id) {
       const cy = cyById[id];
@@ -221,7 +230,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const opts = { ...LAYOUTS[name] };
       if (name === 'breadthfirst' && lastRoots[id]?.length) opts.roots = lastRoots[id];
       cy.layout(opts).run();
-      cy.fit(undefined, 24);
+      fitReadable(cy);
     }
 
     function resizeAllGraphs() {
@@ -234,6 +243,59 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       if (document.fullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen)?.call(document); }
       else { (wrap.requestFullscreen || wrap.webkitRequestFullscreen)?.call(wrap); }
     }
+    // Is the kept collection a single linear chain (no branching)?
+    function isLinearChain(coll) {
+      const nodes = coll.nodes();
+      if (nodes.length < 2) return false;
+      const edges = coll.edges().filter((e) => coll.contains(e.source()) && coll.contains(e.target()));
+      if (edges.length !== nodes.length - 1) return false;
+      return nodes.every((n) => edges.filter((e) => e.source().id() === n.id() || e.target().id() === n.id()).length <= 2);
+    }
+    // Order the nodes of a chain from its root along the edges.
+    function orderChain(coll) {
+      const nodes = coll.nodes();
+      const inChain = (e) => coll.contains(e.source()) && coll.contains(e.target());
+      const start = nodes.filter((n) => n.incomers('edge').filter(inChain).length === 0);
+      let cur = start.length ? start[0] : nodes[0];
+      const order = [], seen = new Set();
+      while (cur && !seen.has(cur.id())) {
+        order.push(cur); seen.add(cur.id());
+        const nxt = cur.outgoers('node').filter((n) => coll.contains(n) && !seen.has(n.id()));
+        cur = nxt.length ? nxt[0] : null;
+      }
+      nodes.forEach((n) => { if (!seen.has(n.id())) order.push(n); });
+      return order;
+    }
+    // A straight chain reads better laid out left-to-right (bigger, more readable).
+    function layoutHorizontalChain(cy, coll) {
+      const order = orderChain(coll);
+      const GAP = 210;
+      cy.batch(() => order.forEach((n, i) => n.position({ x: i * GAP, y: 0 })));
+      fitReadable(cy, coll);
+    }
+
+    // --- chain key (top-left live readout of the hovered/selected chain) ---
+    function chainKeyHtml(coll) {
+      const nodes = coll.nodes();
+      const inChain = (e) => coll.contains(e.source()) && coll.contains(e.target());
+      const depth = {}; nodes.forEach((n) => { depth[n.id()] = 0; });
+      for (let i = 0; i < nodes.length; i++) coll.edges().forEach((e) => {
+        if (inChain(e)) depth[e.target().id()] = Math.max(depth[e.target().id()], depth[e.source().id()] + 1);
+      });
+      const ordered = nodes.sort((a, b) => (depth[a.id()] - depth[b.id()]) || a.data('label').localeCompare(b.data('label')));
+      return ordered.map((n) => `<span class="ck-node" style="color:${DOMAIN_COLOR[n.data('cat')] ?? '#8a93a6'}">${esc(n.data('label'))}</span>`).join('<span class="ck-sep">›</span>');
+    }
+    function showChainKey(id, coll) {
+      const box = document.getElementById(id)?.closest('.graphwrap')?.querySelector('.cy-chainkey');
+      if (!box) return;
+      box.innerHTML = chainKeyHtml(coll);
+      box.style.display = 'block';
+    }
+    function hideChainKey(id) {
+      const box = document.getElementById(id)?.closest('.graphwrap')?.querySelector('.cy-chainkey');
+      if (box) box.style.display = 'none';
+    }
+
     // "Use this exploit path": keep the chosen node + everything up/downstream of it,
     // fade the rest out, then re-run the layout on just the kept chain.
     function pruneToPath(id, nodeId) {
@@ -248,15 +310,20 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       cy.elements().removeClass('dim hl');
       const wrap = document.getElementById(id)?.closest('.graphwrap');
       const sa = wrap && wrap.querySelector('[data-act=showall]'); if (sa) sa.style.display = 'inline-flex';
-      if (!drop.length) { cy.fit(keep, 24); return; }
+      if (!drop.length) { fitReadable(cy, keep); return; }
       // Hide the other branches immediately, hold the kept nodes in place for a
-      // beat, then re-run the layout (animated) so the chosen chain tidies up.
+      // beat, then re-run the layout so the chosen chain tidies up. A straight
+      // chain is laid out horizontally so the boxes can be read without zooming.
       drop.hide();
       cy.fit(keep, 24);
       setTimeout(() => {
-        const roots = keep.nodes().roots();
-        keep.layout({ ...LAYOUTS.breadthfirst, roots: roots.length ? roots : undefined, animate: true, animationDuration: 450 }).run();
-        setTimeout(() => cy.fit(keep, 24), 480);
+        if (isLinearChain(keep)) {
+          layoutHorizontalChain(cy, keep);
+        } else {
+          const roots = keep.nodes().roots();
+          keep.layout({ ...LAYOUTS.breadthfirst, roots: roots.length ? roots : undefined, animate: true, animationDuration: 450 }).run();
+          setTimeout(() => fitReadable(cy, keep), 480);
+        }
       }, 520);
     }
     function restoreGraph(id) {
@@ -344,6 +411,9 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         const menu = document.createElement('div'); menu.className = 'cy-menu'; menu.style.display = 'none';
         menu.innerHTML = '<button type="button" class="cy-menu-use">⛓ use this path</button>';
         if (wrap) wrap.appendChild(menu);
+        // chain key (top-left live readout)
+        const ckey = document.createElement('div'); ckey.className = 'cy-chainkey'; ckey.style.display = 'none';
+        if (wrap) wrap.appendChild(ckey);
         let menuTarget = null;
         const hideMenu = () => { menu.style.display = 'none'; menuTarget = null; };
         cy.on('tap', 'node', (e) => {
@@ -356,15 +426,17 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         cy.on('tap', (e) => { if (e.target === cy) hideMenu(); });
         cy.on('pan zoom', hideMenu);
         menu.querySelector('.cy-menu-use').addEventListener('click', () => { if (menuTarget) pruneToPath(id, menuTarget); hideMenu(); });
-        // hover: highlight everything downstream of the hovered node, dim the rest.
-        // Scoped to visible elements so it keeps working after a prune (repeatable).
+        // hover: highlight the whole chain through the node (upstream AND downstream),
+        // dim the rest, and show the chain as text in the top-left key. Scoped to
+        // visible elements so it keeps working after a prune (repeatable).
         cy.on('mouseover', 'node', (e) => {
           const vis = cy.elements(':visible');
-          const down = e.target.union(e.target.successors()).intersection(vis);
+          const chain = e.target.union(e.target.successors()).union(e.target.predecessors()).intersection(vis);
           vis.addClass('dim');
-          down.removeClass('dim').addClass('hl');
+          chain.removeClass('dim').addClass('hl');
+          showChainKey(id, chain);
         });
-        cy.on('mouseout', 'node', () => { cy.elements().removeClass('dim hl'); });
+        cy.on('mouseout', 'node', () => { cy.elements().removeClass('dim hl'); hideChainKey(id); });
         if (wrap) wrap.querySelectorAll('.gc').forEach((btn) => btn.addEventListener('click', () => {
           const act = btn.dataset.act;
           const cx = container.clientWidth / 2, cyy = container.clientHeight / 2;
