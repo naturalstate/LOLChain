@@ -3,6 +3,7 @@ name: Insecure Direct Object Reference
 slug: idor
 tier: basic
 category: web
+domains: [web, api]
 aliases: [idor, bola]
 summary: >
   The application exposes a reference to an object (id, filename, account) and

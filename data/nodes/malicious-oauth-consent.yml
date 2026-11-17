@@ -3,6 +3,7 @@ name: Malicious OAuth Consent
 slug: malicious-oauth-consent
 tier: advanced
 category: cloud
+domains: [cloud, web]
 aliases: [consent-phishing, illicit-consent-grant, device-code-phishing]
 summary: >
   The attacker lures a victim into approving a malicious OAuth application (or a

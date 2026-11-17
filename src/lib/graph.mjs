@@ -61,6 +61,9 @@ export function buildGraph() {
     node.achieves ??= [];
     node.chains ??= [];
     node.references ??= [];
+    // Soft-filter domains default to the node's own category; bridge nodes override
+    // with several so cross-domain paths persist in a single-domain view.
+    node.domains = Array.isArray(node.domains) && node.domains.length ? node.domains : [node.category];
     nodes.push(node);
   }
 

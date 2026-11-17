@@ -3,6 +3,7 @@ name: Low-and-Slow Enterprise Chain
 slug: enterprise-low-slow
 tier: expert
 category: network
+domains: [network, active-directory]
 aliases: [low-and-slow, enterprise-chain]
 summary: >
   A chain of individually minor findings: a verbose error leaks internal hostnames,

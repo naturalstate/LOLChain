@@ -3,6 +3,7 @@ name: API Broken Object Level Authorization
 slug: api-bola
 tier: basic
 category: mobile
+domains: [mobile, api, web]
 aliases: [bola, api-idor, mass-assignment]
 summary: >
   A backend API fails to scope objects to the caller, so an authenticated client can

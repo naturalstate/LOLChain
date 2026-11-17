@@ -3,6 +3,7 @@ name: Citrix Bleed (NetScaler)
 slug: citrix-bleed
 tier: expert
 category: network
+domains: [network, active-directory]
 aliases: [citrix-bleed, cve-2023-4966, netscaler]
 summary: >
   An out-of-bounds read in Citrix NetScaler ADC/Gateway leaks session tokens from

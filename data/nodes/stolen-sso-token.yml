@@ -3,6 +3,7 @@ name: Stolen SSO / Service Token Reuse
 slug: stolen-sso-token
 tier: advanced
 category: network
+domains: [network, cloud, active-directory]
 aliases: [stolen-session-token, service-token-reuse, okta-token]
 summary: >
   A valid SSO session, OAuth, or service-account token obtained elsewhere (a prior

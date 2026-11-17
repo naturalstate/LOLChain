@@ -43,6 +43,12 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       <span class="lg"><span class="sw" style="background:transparent;border:2px solid #e5484d"></span>goal</span>
     </div>
 
+    <div class="domain-filter" id="domain-filter">
+      <span class="df-label">Test scope</span>
+      <div class="df-chips" id="df-chips"></div>
+      <button class="df-all" id="df-all" type="button">reset</button>
+    </div>
+
     <!-- FORWARD -->
     <div class="panel active" id="panel-forward">
       <div class="mode-layout">
@@ -185,6 +191,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       { selector: 'node.hl', style: { 'border-width': 3, 'border-color': '#e5484d' } },
       { selector: 'edge.hl', style: { 'line-color': '#e5484d', 'target-arrow-color': '#e5484d', 'width': 2.5, 'line-style': 'solid' } },
       { selector: '.dim', style: { 'opacity': 0.16 } },
+      { selector: '.domdim', style: { 'opacity': 0.08 } },
       { selector: 'edge', style: {
         'width': 1.5, 'line-color': '#4a5162', 'target-arrow-color': '#4a5162',
         'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'arrow-scale': 0.9,
@@ -232,8 +239,11 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     function pruneToPath(id, nodeId) {
       const cy = cyById[id]; if (!cy) return;
       const node = cy.getElementById(nodeId); if (!node.length) return;
-      const keep = node.union(node.successors()).union(node.predecessors());
-      const drop = cy.elements().not(keep);
+      // Operate on what's currently visible, so the user can prune repeatedly to
+      // narrow down (each "use this path" filters within the remaining subset).
+      const vis = cy.elements(':visible');
+      const keep = node.union(node.successors()).union(node.predecessors()).intersection(vis);
+      const drop = vis.not(keep);
       cy.scratch('_pruned', true);
       cy.elements().removeClass('dim hl');
       const wrap = document.getElementById(id)?.closest('.graphwrap');
@@ -257,7 +267,64 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       const sa = wrap && wrap.querySelector('[data-act=showall]'); if (sa) sa.style.display = 'none';
       runLayout(id);
     }
-    if (typeof document !== 'undefined') document.addEventListener('fullscreenchange', () => setTimeout(resizeAllGraphs, 60));
+    // After entering OR leaving fullscreen the container size changes; the browser
+    // finishes the transition asynchronously, so resize/fit a few times to catch the
+    // final size (otherwise the canvas keeps the fullscreen width and overflows right).
+    function refitAfterFullscreen() {
+      const run = () => Object.values(cyById).forEach((cy) => {
+        try { cy.resize(); if (cy.elements(':visible').length) cy.fit(undefined, 24); } catch (e) {}
+      });
+      requestAnimationFrame(run);
+      setTimeout(run, 160);
+      setTimeout(run, 420);
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('fullscreenchange', refitAfterFullscreen);
+      document.addEventListener('webkitfullscreenchange', refitAfterFullscreen);
+    }
+
+    // --- domain soft-filter (test-type) ---
+    const DOMAIN_COLOR = { ...CAT_COLOR, api: '#9bb4c4' };
+    const DOMAIN_LABEL = { 'active-directory': 'ad', kubernetes: 'k8s' };
+    const enabledDomains = new Set();
+    // Dim (never remove) nodes whose domains are all outside the enabled set, so a
+    // single-domain view still shows the bridge nodes that carry multiple domains.
+    function applyDomainFilter(cy) {
+      if (!cy) return;
+      cy.batch(() => {
+        cy.nodes().forEach((n) => {
+          const dom = n.data('dom') || [];
+          const show = n.data('start') === 1 || !dom.length || !enabledDomains.size || dom.some((d) => enabledDomains.has(d));
+          n.toggleClass('domdim', !show);
+        });
+        cy.edges().forEach((e) => {
+          e.toggleClass('domdim', e.source().hasClass('domdim') || e.target().hasClass('domdim'));
+        });
+      });
+    }
+    function applyDomainFilterAll() { Object.values(cyById).forEach(applyDomainFilter); }
+    function buildDomainChips() {
+      const host = document.getElementById('df-chips');
+      if (!host || !graph) return;
+      const vocab = [...new Set(graph.nodes.flatMap((n) => n.domains ?? [n.category]))].sort();
+      vocab.forEach((d) => enabledDomains.add(d));
+      host.innerHTML = vocab.map((d) => {
+        const c = DOMAIN_COLOR[d] ?? '#8a93a6';
+        return `<button type="button" class="df-chip on" data-domain="${d}" style="--dc:${c}"><span class="df-sw"></span>${esc(DOMAIN_LABEL[d] ?? d)}</button>`;
+      }).join('');
+      host.querySelectorAll('.df-chip').forEach((b) => b.addEventListener('click', () => {
+        const d = b.dataset.domain;
+        if (enabledDomains.has(d)) { enabledDomains.delete(d); b.classList.remove('on'); }
+        else { enabledDomains.add(d); b.classList.add('on'); }
+        applyDomainFilterAll();
+      }));
+      const reset = document.getElementById('df-all');
+      if (reset) reset.addEventListener('click', () => {
+        vocab.forEach((d) => enabledDomains.add(d));
+        host.querySelectorAll('.df-chip').forEach((b) => b.classList.add('on'));
+        applyDomainFilterAll();
+      });
+    }
 
     function drawGraph(id, els, roots) {
       const container = document.getElementById(id);
@@ -289,14 +356,15 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
         cy.on('tap', (e) => { if (e.target === cy) hideMenu(); });
         cy.on('pan zoom', hideMenu);
         menu.querySelector('.cy-menu-use').addEventListener('click', () => { if (menuTarget) pruneToPath(id, menuTarget); hideMenu(); });
-        // hover: highlight everything downstream of the hovered node, dim the rest
+        // hover: highlight everything downstream of the hovered node, dim the rest.
+        // Scoped to visible elements so it keeps working after a prune (repeatable).
         cy.on('mouseover', 'node', (e) => {
-          if (cy.scratch('_pruned')) return;
-          const down = e.target.union(e.target.successors());
-          cy.elements().addClass('dim');
+          const vis = cy.elements(':visible');
+          const down = e.target.union(e.target.successors()).intersection(vis);
+          vis.addClass('dim');
           down.removeClass('dim').addClass('hl');
         });
-        cy.on('mouseout', 'node', () => { if (!cy.scratch('_pruned')) cy.elements().removeClass('dim hl'); });
+        cy.on('mouseout', 'node', () => { cy.elements().removeClass('dim hl'); });
         if (wrap) wrap.querySelectorAll('.gc').forEach((btn) => btn.addEventListener('click', () => {
           const act = btn.dataset.act;
           const cx = container.clientWidth / 2, cyy = container.clientHeight / 2;
@@ -317,6 +385,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       lastRoots[id] = roots?.length ? roots : null;
       if (layoutIdx[id] === undefined) layoutIdx[id] = 0;
       runLayout(id);
+      applyDomainFilter(cy);
     }
 
     function focusNode(id, slug) {
@@ -332,7 +401,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
     function pushNode(els, seen, slug, extra = {}) {
       if (seen.has(slug)) return; seen.add(slug);
       const n = nodeMeta[slug];
-      els.push({ data: { id: slug, label: n.name, cat: n.category, goal: (n.achieves ?? []).length ? 1 : 0, ...extra } });
+      els.push({ data: { id: slug, label: n.name, cat: n.category, dom: n.domains ?? [n.category], goal: (n.achieves ?? []).length ? 1 : 0, ...extra } });
     }
     function pathElements(paths) {
       const seen = new Set(), eseen = new Set(), els = [];
@@ -588,6 +657,7 @@ const capGroups = capabilityGroups.map((g) => ({ ...g, caps: capabilities.filter
       capLabel = Object.fromEntries(g.capabilities.map((c) => [c.slug, c.label]));
       goalLabel = Object.fromEntries(g.goals.map((x) => [x.slug, x.label]));
       nodeMeta = Object.fromEntries(g.nodes.map((n) => [n.slug, n]));
+      buildDomainChips();
       wire();
     });
   </script>

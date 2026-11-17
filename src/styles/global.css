@@ -281,6 +281,25 @@ a:hover { color: var(--text); }
 .graph-legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .graph-legend .ln { width: 16px; height: 0; border-top: 2px solid var(--text-dim); display: inline-block; }
 .graph-legend .ln.dash { border-top-style: dashed; }
+
+/* Domain soft-filter (test-type scope) */
+.domain-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 16px; }
+.df-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
+.df-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.df-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; padding: 4px 9px; border-radius: 20px;
+  border: 1px solid var(--border-strong); background: transparent; color: var(--text-dim);
+}
+.df-chip .df-sw { width: 9px; height: 9px; border-radius: 3px; background: var(--dc); opacity: 0.3; }
+.df-chip.on { color: var(--text); border-color: var(--dc); }
+.df-chip.on .df-sw { opacity: 1; }
+.df-chip:hover { color: var(--text); }
+.df-all {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+  padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-dim);
+}
+.df-all:hover { color: var(--accent); border-color: var(--accent); }
 .view-toggle { display: inline-flex; gap: 2px; margin-bottom: 14px; border: 1px solid var(--border-strong); border-radius: 6px; overflow: hidden; }
 .view-toggle button { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 6px 12px; background: transparent; border: none; color: var(--text-dim); cursor: pointer; }
 .view-toggle button.on { background: var(--bg-row-hover); color: var(--accent); }

@@ -3,6 +3,7 @@ name: Webshell Execution
 slug: webshell-rce
 tier: basic
 category: web
+domains: [web, host]
 aliases: [webshell, web-shell]
 summary: >
   A convergence point for many chains: once an attacker can write a server-executable

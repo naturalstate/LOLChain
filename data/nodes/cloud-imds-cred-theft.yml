@@ -3,6 +3,7 @@ name: Cloud IMDS Credential Theft
 slug: cloud-imds-cred-theft
 tier: basic
 category: cloud
+domains: [cloud, web]
 aliases: [imds, metadata-creds, 169.254.169.254]
 summary: >
   Read temporary role credentials from the cloud instance metadata service once

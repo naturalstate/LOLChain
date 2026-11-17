@@ -3,6 +3,7 @@ name: OAuth Token Theft to ATO
 slug: oauth-token-theft
 tier: advanced
 category: web
+domains: [web, api]
 aliases: [oauth-ato, token-theft]
 summary: >
   A leaked OAuth authorization code or access token is replayed to authenticate as

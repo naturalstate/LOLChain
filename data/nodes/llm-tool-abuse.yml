@@ -3,6 +3,7 @@ name: Agent Tool Abuse
 slug: llm-tool-abuse
 tier: advanced
 category: llm
+domains: [llm, cloud, web]
 aliases: [tool-abuse, excessive-agency, function-calling-abuse]
 summary: >
   With control over an agent's tool calls, an attacker abuses an over-scoped tool:

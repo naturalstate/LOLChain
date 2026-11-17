@@ -3,6 +3,7 @@ name: Golden SAML
 slug: golden-saml
 tier: expert
 category: network
+domains: [active-directory, cloud, network]
 aliases: [golden-saml, saml-forgery, adfs-token-signing]
 summary: >
   Having compromised the identity provider (e.g. the ADFS token-signing private key),

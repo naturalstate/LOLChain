@@ -3,6 +3,7 @@ name: Server-Side Request Forgery
 slug: ssrf
 tier: basic
 category: web
+domains: [web, cloud, network]
 aliases: [ssrf]
 summary: >
   Coerce the server into making attacker-controlled requests to hosts it can

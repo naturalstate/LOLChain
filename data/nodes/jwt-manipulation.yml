@@ -3,6 +3,7 @@ name: JWT Manipulation
 slug: jwt-manipulation
 tier: advanced
 category: web
+domains: [web, api]
 aliases: [jwt, jwt-attack, alg-none]
 summary: >
   Weaknesses in JWT verification (alg:none, RS256->HS256 confusion, weak-secret
